@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "helper-tools-build": "ng build --base-href /helper-tools-v2/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
