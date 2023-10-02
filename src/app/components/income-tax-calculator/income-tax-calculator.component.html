@@ -1,24 +1,25 @@
-<mat-grid-list cols="4" rowHeight="25rem" gutterSize="0.5rem">
+<mat-grid-list cols="4" rowHeight="30rem" gutterSize="0.5rem">
   <mat-grid-tile [colspan]="1" [rowspan]="1" [style.background]="'lightgreen'">
     <mat-card>
-      <mat-card-content>Simple card</mat-card-content>
+      <mat-card-content>Declarations</mat-card-content>
 
-      <div class="example-container m-5">
+      <div class="m-5">
         <div>
           <mat-form-field appearance="fill">
-            <mat-label>Fill form field</mat-label>
+            <mat-label>Enter the annual Income</mat-label>
             <mat-icon fontIcon="currency_rupee" matPrefix></mat-icon>
-            <input matInput type="number" class="example-right-align"
-              placeholder="0">
-            <mat-hint>Hint</mat-hint>
+            <input matInput [(ngModel)]="income" type="number"
+              class="example-right-align" placeholder="0">
+            <mat-hint>Annual Income</mat-hint>
           </mat-form-field>
         </div>
-        <div>
+        <div class="mb-5">
           <mat-form-field appearance="fill">
-            <mat-label>Amount</mat-label>
-            <input matInput type="number" class="example-right-align"
-              placeholder="0">
+            <mat-label>80C investments</mat-label>
             <mat-icon fontIcon="currency_rupee" matPrefix></mat-icon>
+            <input matInput type="number" [(ngModel)]="investments"
+              class="example-right-align" placeholder="0">
+            <mat-hint>Max ₹1,50,000 will be considered</mat-hint>
           </mat-form-field>
         </div>
         <div>
@@ -29,17 +30,155 @@
     </mat-card>
   </mat-grid-tile>
   <mat-grid-tile [colspan]="2" [rowspan]="1" [style.background]="'lightgreen'">
-    One
+    <mat-card class="mx-5">
+      <mat-card-content>Investments under 80C Declaration</mat-card-content>
+      <mat-card-content>(Max ₹1,50,000 will be considered)</mat-card-content>
+
+      <div class="m-5">
+        <div>
+          <mat-form-field appearance="fill">
+            <mat-label>School Fees</mat-label>
+            <mat-icon fontIcon="currency_rupee" matPrefix></mat-icon>
+            <input matInput [(ngModel)]="investmentComps[0]"
+              (ngModelChange)="sumInvestments()" type="number"
+              class="example-right-align" placeholder="0">
+          </mat-form-field>
+        </div>
+        <div>
+          <mat-form-field appearance="fill">
+            <mat-label>EPF</mat-label>
+            <mat-icon fontIcon="currency_rupee" matPrefix></mat-icon>
+            <input matInput type="number" [(ngModel)]="investmentComps[1]"
+              (ngModelChange)="sumInvestments()" class="example-right-align"
+              placeholder="0">
+          </mat-form-field>
+        </div>
+        <div>
+          <mat-form-field appearance="fill">
+            <mat-label>PPF/Other</mat-label>
+            <mat-icon fontIcon="currency_rupee" matPrefix></mat-icon>
+            <input matInput type="number" [(ngModel)]="investmentComps[2]"
+              (ngModelChange)="sumInvestments()" class="example-right-align"
+              placeholder="0">
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-card>
+    <mat-card class="mx-5">
+      <mat-card-content>Insurance</mat-card-content>
+      <div class="m-5">
+        <div>
+          <mat-form-field appearance="fill">
+            <mat-label>Personal</mat-label>
+            <mat-icon fontIcon="currency_rupee" matPrefix></mat-icon>
+            <input matInput type="number" [(ngModel)]="persInsurance"
+              class="example-right-align" placeholder="0">
+            <mat-hint>Max ₹25,000 will be considered</mat-hint>
+          </mat-form-field>
+        </div>
+        <div>
+          <mat-form-field appearance="fill">
+            <mat-label>Parents</mat-label>
+            <mat-icon fontIcon="currency_rupee" matPrefix></mat-icon>
+            <input matInput type="number" [(ngModel)]="parenInsurance"
+              class="example-right-align" placeholder="0">
+            <mat-hint>Max ₹25,000 will be considered</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-card>
   </mat-grid-tile>
-  <mat-grid-tile [colspan]="1" [rowspan]="2" [style.background]="'lightgreen'">
-    One
+  <mat-grid-tile [colspan]="1" [rowspan]="2"
+    [style.background]="'#d5b100'"><mat-card class="mx-5">
+      <mat-card-content>Taxable Income Calculation</mat-card-content>
+      <div class="m-5">
+        <table mat-table [dataSource]="taxableAmountCalcTable">
+          <ng-container matColumnDef="item">
+            <th mat-header-cell *matHeaderCellDef> Min Limit </th>
+            <td mat-cell *matCellDef="let element"> {{ element.item }} </td>
+            <td mat-footer-cell *matFooterCellDef> Net Taxable Income </td>
+          </ng-container>
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef> Amount </th>
+            <td mat-cell *matCellDef="let element"> {{ element.amount }} </td>
+            <td mat-footer-cell *matFooterCellDef> {{ netTaxableIncome }} </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['item', 'amount',]"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['item','amount'];">
+          </tr>
+          <tr mat-footer-row *matFooterRowDef="['item','amount']"> </tr>
+        </table>
+      </div>
+    </mat-card>
   </mat-grid-tile>
-  <mat-grid-tile [colspan]="2" [rowspan]="1" [style.background]="'lightgreen'">
-    <div *ngIf="taxCalculated" class="result">
-      <p>Your income tax: {{ taxAmount }}</p>
-    </div>
+  <mat-grid-tile [colspan]="2" [rowspan]="1" [style.background]="'#000'">
+    <mat-card class="mx-5">
+      <mat-card-content>Net Tax payable</mat-card-content>
+      <div class="m-5">
+        <table mat-table [dataSource]="taxCalcTable">
+          <ng-container matColumnDef="item">
+            <th mat-header-cell *matHeaderCellDef> Min Limit </th>
+            <td mat-cell *matCellDef="let element"> {{ element.item }} </td>
+            <td mat-footer-cell *matFooterCellDef> Net Taxable Income </td>
+          </ng-container>
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef> Amount </th>
+            <td mat-cell *matCellDef="let element"> {{ element.amount }} </td>
+            <td mat-footer-cell *matFooterCellDef> {{ netTaxableIncome }} </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['item', 'amount',]"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['item','amount'];">
+          </tr>
+        </table>
+      </div>
+    </mat-card>
   </mat-grid-tile>
-  <mat-grid-tile [colspan]="1" [rowspan]="1" [style.background]="'lightgreen'">
-    One
+  <mat-grid-tile [colspan]="1" [rowspan]="1" [style.background]="'#cdcf00'">
+    <mat-card class="mx-5">
+      <mat-card-content>Tax Calculation</mat-card-content>
+      <div class="m-5">
+        <table mat-table [dataSource]="numbers">
+          <ng-container matColumnDef="minLimit">
+            <th mat-header-cell *matHeaderCellDef> Min Limit </th>
+            <td mat-cell *matCellDef="let element"> {{ element.minLimit }} </td>
+            <td mat-footer-cell colspan="2" *matFooterCellDef> Total </td>
+          </ng-container>
+
+          <!-- Sum Column -->
+          <ng-container matColumnDef="maxLimit">
+            <th mat-header-cell *matHeaderCellDef> Max Limit </th>
+            <td mat-cell *matCellDef="let element"> {{ element.maxLimit < 0
+                ? '∞' : element.maxLimit }} </td>
+          </ng-container>
+          <ng-container matColumnDef="percent">
+            <th mat-header-cell *matHeaderCellDef> % </th>
+            <td mat-cell *matCellDef="let element"> {{ element.percent }} </td>
+          </ng-container>
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef> Amount </th>
+            <td mat-cell *matCellDef="let element"> {{ element.taxAmount }}
+            </td>
+            <td mat-footer-cell colspan="2" *matFooterCellDef> {{ taxAmount }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row
+            *matHeaderRowDef="['minLimit', 'maxLimit','percent', 'amount',]">
+          </tr>
+
+          <tr>
+            <td colspan="3">Custom Row 2 with Column Span</td>
+          </tr>
+          <tr mat-row
+            *matRowDef="let row; columns: ['minLimit', 'maxLimit', 'percent','amount'];">
+          </tr>
+          <tr mat-footer-row *matFooterRowDef="['minLimit', 'amount']"> </tr>
+
+        </table>
+      </div>
+    </mat-card>
+
   </mat-grid-tile>
 </mat-grid-list>

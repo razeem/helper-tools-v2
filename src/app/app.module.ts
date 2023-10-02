@@ -15,6 +15,7 @@ import { MatSidenavModule } from '@angular/material/sidenav'; // For mat-sidenav
 import { MatListModule } from '@angular/material/list'; // For mat-nav-list
 import { MatIconModule } from '@angular/material/icon'; // For mat-icon
 import { MatGridListModule } from '@angular/material/grid-list';
+import { MatTableModule } from '@angular/material/table';
 
 
 @NgModule({
@@ -37,6 +38,7 @@ import { MatGridListModule } from '@angular/material/grid-list';
     MatListModule,
     MatIconModule,
     MatGridListModule,
+    MatTableModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
