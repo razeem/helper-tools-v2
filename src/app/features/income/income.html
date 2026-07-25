@@ -12,14 +12,14 @@
   >
     <!-- Minimum Income -->
     <mat-tab label="Minimum Income">
-      <div class="tab">
+      <div class="flex flex-col gap-5 pt-5">
         <app-section-card
           title="Your monthly income"
           eyebrow="Owned here · monthly"
           icon="account_balance_wallet"
           subtitle="Enter what you earn each month — it drives tax and net income across the app."
         >
-          <div class="fields">
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-x-4 gap-y-1">
             <mat-form-field appearance="outline">
               <mat-label>Gross monthly income</mat-label>
               <span matTextPrefix>₹&nbsp;</span>
@@ -33,7 +33,8 @@
                 data-testid="income-gross"
               />
               <mat-hint
-                >≈ {{ derived().annualGross | currency: 'INR' : 'symbol' : '1.0-0' }} / year</mat-hint
+                >≈ {{ derived().annualGross | currency: 'INR' : 'symbol' : '1.0-0' }} /
+                year</mat-hint
               >
             </mat-form-field>
             <mat-form-field appearance="outline">
@@ -63,8 +64,8 @@
             </mat-expansion-panel-header>
 
             <p class="months__help">
-              Months run April → March. Each starts at your declared salary — override any month
-              for a hike or cut, and add one-off <strong>bonuses</strong> separately.
+              Months run April → March. Each starts at your declared salary — override any month for
+              a hike or cut, and add one-off <strong>bonuses</strong> separately.
             </p>
 
             <div class="months__grid">
@@ -110,7 +111,7 @@
           </mat-expansion-panel>
         </app-section-card>
 
-        <div class="stat-row">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
           <app-stat-tile
             label="Income tax"
             [value]="derived().taxPayable | currency: 'INR' : 'symbol' : '1.0-0'"
@@ -179,12 +180,17 @@
 
     <!-- Goals -->
     <mat-tab label="Goals">
-      <div class="tab goals">
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5 pt-5">
         <app-section-card title="Must have" eyebrow="Non-negotiable" icon="flag">
           <div class="goal-list" cdkDropList (cdkDropListDropped)="dropMustHave($event)">
             @for (goal of mustHave.items(); track goal.id) {
               <div class="goal-row" cdkDrag>
-                <button type="button" class="goal-row__handle" cdkDragHandle aria-label="Drag to reorder">
+                <button
+                  type="button"
+                  class="goal-row__handle"
+                  cdkDragHandle
+                  aria-label="Drag to reorder"
+                >
                   <mat-icon>drag_indicator</mat-icon>
                 </button>
                 <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -223,7 +229,12 @@
           <div class="goal-list" cdkDropList (cdkDropListDropped)="dropGoodToHave($event)">
             @for (goal of goodToHave.items(); track goal.id) {
               <div class="goal-row" cdkDrag>
-                <button type="button" class="goal-row__handle" cdkDragHandle aria-label="Drag to reorder">
+                <button
+                  type="button"
+                  class="goal-row__handle"
+                  cdkDragHandle
+                  aria-label="Drag to reorder"
+                >
                   <mat-icon>drag_indicator</mat-icon>
                 </button>
                 <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -261,7 +272,7 @@
 
     <!-- ICER Idea Generator -->
     <mat-tab label="Idea Generator">
-      <div class="tab">
+      <div class="flex flex-col gap-5 pt-5">
         <app-section-card
           title="Income ideas"
           eyebrow="ICER rating"
@@ -281,7 +292,7 @@
             </button>
           </div>
 
-          <div class="table-scroll">
+          <div class="overflow-x-auto">
             <table class="icer" data-testid="icer-table">
               <thead>
                 <tr>

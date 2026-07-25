@@ -1,5 +1,5 @@
-<div class="profile">
-  <div class="profile__photo">
+<div class="flex flex-col gap-5">
+  <div class="flex flex-col items-center gap-[0.6rem]">
     <div class="avatar" [class.avatar--empty]="!photoUrl()">
       @if (photoUrl(); as url) {
         <img [src]="url" alt="Profile photo" data-testid="profile-photo" />
@@ -7,7 +7,7 @@
         <mat-icon>account_circle</mat-icon>
       }
     </div>
-    <div class="profile__photo-actions">
+    <div class="flex items-center gap-1">
       <button mat-stroked-button type="button" (click)="fileInput.click()">
         <mat-icon>photo_camera</mat-icon>
         {{ photoUrl() ? 'Change' : 'Upload' }}
@@ -53,7 +53,7 @@
     </mat-form-field>
   </form>
 
-  <div class="profile__actions">
+  <div class="flex items-center justify-end gap-3">
     <p class="profile__export-note">
       Export moved to the <strong>Dashboard → Export workbook</strong> (all pillars in one file).
     </p>

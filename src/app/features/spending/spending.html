@@ -5,7 +5,7 @@
     icon="shopping_cart"
   />
 
-  <div class="stat-row">
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-5">
     <app-stat-tile
       label="Total needs"
       [value]="derived().totalNeeds | currency: 'INR' : 'symbol' : '1.0-0'"
@@ -22,7 +22,7 @@
     />
   </div>
 
-  <div class="lists">
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-5 items-start">
     <app-section-card
       title="Needs"
       eyebrow="Must-have · monthly"

@@ -5,7 +5,7 @@
     icon="dashboard"
   />
 
-  <div class="stat-row">
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-5">
     <app-stat-tile
       label="Gross income"
       [value]="derived().gross | currency: 'INR' : 'symbol' : '1.0-0'"
@@ -40,7 +40,7 @@
     icon="balance"
     subtitle="How your money splits across Living, Safety and Growth & Freedom — drag to set your target, compare against your actuals."
   >
-    <div class="alloc">
+    <div class="flex flex-col gap-5">
       <!-- Draggable target split — two handles always keep the ratio at 100%. -->
       <div class="split" role="group" aria-label="Target allocation ratio">
         @for (b of allocationView(); track b.key) {
@@ -79,7 +79,7 @@
       </div>
 
       <!-- Actual vs target per bucket -->
-      <div class="alloc__rows">
+      <div class="flex flex-col gap-4">
         @for (b of allocationView(); track b.key) {
           <div class="alloc-row" [attr.data-testid]="'alloc-' + b.key">
             <div class="alloc-row__head">
@@ -106,7 +106,9 @@
                   <span class="alloc-row__leg">
                     <span class="alloc-row__leg-dot" [style.background]="s.color"></span>
                     {{ s.label }}
-                    <span class="app-num">{{ s.amount | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+                    <span class="app-num">{{
+                      s.amount | currency: 'INR' : 'symbol' : '1.0-0'
+                    }}</span>
                   </span>
                 }
               </div>
@@ -121,7 +123,7 @@
   </app-section-card>
 
   <h2 class="section-title">Pillars</h2>
-  <div class="pillar-grid">
+  <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] auto-rows-fr gap-4">
     @for (pillar of pillars; track pillar.path) {
       <app-pillar-card
         [path]="pillar.path"

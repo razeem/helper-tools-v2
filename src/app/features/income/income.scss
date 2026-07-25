@@ -1,24 +1,5 @@
-.tab {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  padding-top: 1.25rem;
-}
-
-.fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.25rem 1rem;
-}
-
 mat-form-field {
   width: 100%;
-}
-
-.stat-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
 }
 
 .breakdown {
@@ -53,12 +34,6 @@ mat-form-field {
   &__amount {
     font-variant-numeric: tabular-nums;
   }
-}
-
-.goals {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.25rem;
 }
 
 .months {
@@ -151,10 +126,6 @@ mat-form-field {
 }
 .goal-list.cdk-drop-list-dragging .goal-row:not(.cdk-drag-placeholder) {
   transition: transform 220ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-.table-scroll {
-  overflow-x: auto;
 }
 
 .icer {

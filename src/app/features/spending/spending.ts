@@ -11,7 +11,6 @@ import { LineItemList } from '../../shared/ui/line-item-list/line-item-list';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CurrencyPipe, PageHeader, SectionCard, StatTile, LineItemList],
   templateUrl: './spending.html',
-  styleUrl: './spending.scss',
 })
 export class Spending {
   private readonly store = inject(FinanceStore);

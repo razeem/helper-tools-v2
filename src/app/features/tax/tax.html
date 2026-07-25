@@ -26,7 +26,7 @@
   >
     <!-- Calculator -->
     <mat-tab label="Calculator">
-      <div class="tab">
+      <div class="flex flex-col gap-5 pt-5">
         @if (gross() === 0) {
           <app-inline-prompt
             message="Set your Gross Income in the Income pillar to calculate tax."
@@ -35,7 +35,7 @@
           />
         }
 
-        <div class="stat-row">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
           <app-stat-tile
             label="Gross income"
             [value]="gross() | currency: 'INR' : 'symbol' : '1.0-0'"
@@ -67,7 +67,7 @@
           </div>
 
           @if (inputs().tax.regime === 'old') {
-            <div class="fields">
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-x-4 gap-y-1">
               @for (field of deductionFields; track field.key) {
                 <mat-form-field appearance="outline">
                   <mat-label>{{ field.label }}</mat-label>
@@ -94,7 +94,7 @@
         </app-section-card>
 
         <app-section-card title="Breakdown" icon="calculate">
-          <table mat-table [dataSource]="result().deductions" class="w-full mb">
+          <table mat-table [dataSource]="result().deductions" class="w-full mb-5">
             <ng-container matColumnDef="label">
               <th mat-header-cell *matHeaderCellDef>Deduction</th>
               <td mat-cell *matCellDef="let row">{{ row.label }}</td>
@@ -151,7 +151,7 @@
 
     <!-- Regime comparer -->
     <mat-tab label="Regime comparer">
-      <div class="tab">
+      <div class="flex flex-col gap-5 pt-5">
         @if (gross() === 0) {
           <app-inline-prompt
             message="Set your Gross Income in the Income pillar to compare regimes."
