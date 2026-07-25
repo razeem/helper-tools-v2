@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `npm start` — dev server at `http://localhost:4200/`.
 - `npm run build` — production build → `dist/` (git-ignored). Base href `/`.
-- `npm run build:pages` — production build with `--base-href /helper-tools-v2/`, matching how CI builds for GitHub Pages (the site is served from that subpath; a plain `build` bakes in a `/` base href that breaks assets there). Useful for locally reproducing the deployed output.
+- `npm run build:pages` — production build with `--base-href /personal-finance-dashboard/`, matching how CI builds for GitHub Pages (the site is served from that subpath; a plain `build` bakes in a `/` base href that breaks assets there). Useful for locally reproducing the deployed output.
 - `npm test` — Vitest unit tests (watch). Single run: `npx ng test --no-watch`. Filter: `npx ng test --no-watch --include='**/income-tax.model.spec.ts'` (pattern support depends on the builder; the pure-logic specs are the fast ones).
 - `npm run lint` — ESLint (flat config, `eslint.config.js`).
 - `npm run format` / `npm run format:check` — Prettier.

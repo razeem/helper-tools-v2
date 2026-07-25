@@ -21,7 +21,7 @@ Built with **Angular 22** (standalone, zoneless, signals), **Angular Material 3*
 | --- | --- |
 | `npm start` | Dev server at http://localhost:4200 |
 | `npm run build` | Production build → `dist/` (git-ignored) |
-| `npm run build:pages` | Production build with `--base-href /helper-tools-v2/` (reproduces the deployed output locally) |
+| `npm run build:pages` | Production build with `--base-href /personal-finance-dashboard/` (reproduces the deployed output locally) |
 | `npm test` | Unit tests (Vitest); single run: `npx ng test --no-watch` |
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier (write) |
