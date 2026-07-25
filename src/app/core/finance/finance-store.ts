@@ -5,8 +5,10 @@ import { OldRegimeDeductions, TaxRegime } from './tax.model';
 import {
   AllocationTarget,
   DEFAULT_ALLOCATION_TARGET,
+  DEFAULT_EMERGENCY_MULTIPLIER,
   DEFAULT_FINANCE_INPUTS,
   deriveFinance,
+  EmergencyMultiplier,
   FinanceInputs,
   Goal,
   IdeaRow,
@@ -35,7 +37,7 @@ export interface ListOps<T extends { id: string }> {
 export class FinanceStore {
   private readonly store = inject(StorageService).bind<FinanceInputs>({
     key: 'finance',
-    version: 4,
+    version: 5,
     defaults: DEFAULT_FINANCE_INPUTS,
     migrate: (raw) => {
       const data = raw as FinanceInputs;
@@ -65,6 +67,10 @@ export class FinanceStore {
           },
         };
       }
+      // v4 → v5: seed the Saving pillar's emergency-fund multiplier.
+      if (!out.saving) {
+        out = { ...out, saving: { emergencyMultiplier: DEFAULT_EMERGENCY_MULTIPLIER } };
+      }
       return out;
     },
   });
@@ -88,9 +94,7 @@ export class FinanceStore {
     const next = numeric(value);
     this.store.update((i) => {
       const prev = i.income.gross;
-      const months = i.income.months.map((m) =>
-        m.base === prev ? { ...m, base: next } : m,
-      );
+      const months = i.income.months.map((m) => (m.base === prev ? { ...m, base: next } : m));
       return { ...i, income: { ...i.income, gross: next, months } };
     });
   }
@@ -140,6 +144,12 @@ export class FinanceStore {
     (i) => i.loan.emis,
     (i, items) => ({ ...i, loan: { emis: items } }),
   );
+  // ---- Saving pillar ----
+  readonly emergencyMultiplier = computed(() => this.inputs().saving.emergencyMultiplier);
+  setEmergencyMultiplier(multiplier: EmergencyMultiplier): void {
+    this.store.update((i) => ({ ...i, saving: { ...i.saving, emergencyMultiplier: multiplier } }));
+  }
+
   readonly insurancePremiums = this.list<LineItem>(
     (i) => i.insurance.premiums,
     (i, items) => ({ ...i, insurance: { premiums: items } }),

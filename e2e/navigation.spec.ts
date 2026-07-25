@@ -18,11 +18,22 @@ test('sidebar navigates between pillars', async ({ page }) => {
   await expect(page).toHaveURL(/\/spending$/);
 });
 
-test('coming-soon pillars render a placeholder', async ({ page }) => {
-  for (const path of ['saving', 'loan']) {
-    await page.goto(`/${path}`);
-    await expect(page.getByTestId('coming-soon')).toBeVisible();
-  }
+test('saving pillar sizes an emergency fund from the essential expense', async ({ page }) => {
+  await page.goto('/saving');
+  await expect(page.getByTestId('saving-minimum-tile')).toBeVisible();
+  // Three selectable tiers (3× / 6× / 12×); 6× is the default.
+  await expect(page.getByTestId('saving-tier-3')).toBeVisible();
+  await expect(page.getByTestId('saving-tier-6')).toHaveAttribute('aria-pressed', 'true');
+  // Picking a tier updates the target-fund label.
+  await page.getByTestId('saving-tier-12').click();
+  await expect(page.getByTestId('saving-target-tile')).toContainText('12×');
+});
+
+test('loan EMIs support monthly/yearly and roll into a monthly total', async ({ page }) => {
+  await page.goto('/loan');
+  await page.getByTestId('loan-add').click();
+  await page.getByTestId('loan-value').first().fill('15000'); // defaults to monthly
+  await expect(page.getByTestId('loan-total-tile')).toContainText('15,000');
 });
 
 test('insurance and investing are live declaration pillars', async ({ page }) => {

@@ -65,6 +65,34 @@ describe('deriveFinance (monthly inputs, annualised tax)', () => {
     expect(d.totalWants).toBe(10_000);
   });
 
+  it('treats loan EMIs as period-aware (yearly ÷ 12)', () => {
+    const yearly = { ...makeLineItem('Car', 24_000, 'yearly') }; // ₹2,000/mo
+    const d = deriveFinance({ ...inputs, loan: { emis: [yearly] } });
+    expect(d.totalLoanEmis).toBe(2_000);
+  });
+
+  it('derives the minimum monthly (essential) expense: needs + loan + mandatory', () => {
+    const d = deriveFinance({
+      ...inputs,
+      investing: { mandatory: [makeLineItem('EPF', 3_000)], voluntary: [] },
+    });
+    // totalNeeds 40,000 (already incl. 15,000 EMIs) + mandatory 3,000
+    expect(d.minimumMonthlyExpense).toBe(43_000);
+  });
+
+  it('sizes the emergency-fund target by the chosen multiplier', () => {
+    const base = {
+      ...inputs,
+      investing: { mandatory: [makeLineItem('EPF', 3_000)], voluntary: [] },
+    };
+    // essential expense = 43,000
+    const at3 = deriveFinance({ ...base, saving: { emergencyMultiplier: 3 } });
+    const at12 = deriveFinance({ ...base, saving: { emergencyMultiplier: 12 } });
+    expect(at3.emergencyMultiplier).toBe(3);
+    expect(at3.emergencyTarget).toBe(129_000); // 43,000 × 3
+    expect(at12.emergencyTarget).toBe(516_000); // 43,000 × 12
+  });
+
   it('buckets money into Living / Safety / Growth & Freedom', () => {
     const d = deriveFinance({
       ...inputs,
@@ -125,6 +153,7 @@ describe('deriveFinance — edge cases', () => {
     ideas: [],
     spending: { needs: [], wants: [] },
     loan: { emis: [] },
+    saving: { emergencyMultiplier: 6 },
     insurance: { premiums: [] },
     investing: { mandatory: [], voluntary: [] },
     tax: { regime: 'old', deductions: DEFAULT_FINANCE_INPUTS.tax.deductions },

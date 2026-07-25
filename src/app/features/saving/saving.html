@@ -1,0 +1,101 @@
+<div class="app-page">
+  <app-page-header
+    title="Saving"
+    subtitle="Build your safety net — start with an emergency fund"
+    icon="savings"
+  />
+
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-5">
+    <app-stat-tile
+      label="Minimum monthly expense"
+      [value]="derived().minimumMonthlyExpense | currency: 'INR' : 'symbol' : '1.0-0'"
+      hint="needs + loan + mandatory investment"
+      icon="payments"
+      tone="accent"
+      data-testid="saving-minimum-tile"
+    />
+    <app-stat-tile
+      [label]="emergencyMultiplier() + '× emergency fund'"
+      [value]="derived().emergencyTarget | currency: 'INR' : 'symbol' : '1.0-0'"
+      hint="target corpus to build"
+      icon="shield"
+      data-testid="saving-target-tile"
+    />
+  </div>
+
+  <div class="flex flex-col gap-5">
+    <app-section-card
+      title="Emergency fund formula"
+      eyebrow="How many months to save"
+      icon="emergency"
+      subtitle="Ask yourself: stable job? stable income? dependents? — then pick the profile that matches you. It multiplies your essential expense."
+    >
+      <div class="tiers" data-testid="saving-tiers">
+        @for (tier of tiers; track tier.multiplier) {
+          <button
+            type="button"
+            class="tier"
+            [class.tier--active]="tier.multiplier === emergencyMultiplier()"
+            (click)="select(tier.multiplier)"
+            [attr.aria-pressed]="tier.multiplier === emergencyMultiplier()"
+            [attr.data-testid]="'saving-tier-' + tier.multiplier"
+          >
+            <div class="tier__questions">
+              @for (q of questions; track q.key) {
+                <span
+                  class="tier__q"
+                  [class.tier__q--yes]="tier[q.key]"
+                  [class.tier__q--no]="!tier[q.key]"
+                >
+                  <mat-icon aria-hidden="true">{{
+                    tier[q.key] ? 'check_circle' : 'radio_button_unchecked'
+                  }}</mat-icon>
+                  {{ q.label }}
+                </span>
+              }
+            </div>
+            <div class="tier__badge">
+              <span class="tier__mult app-num">{{ tier.multiplier }}×</span>
+              <small>Essential<br />Expense</small>
+            </div>
+          </button>
+        }
+      </div>
+    </app-section-card>
+
+    <app-section-card
+      title="Essential expense"
+      eyebrow="Derived · monthly"
+      icon="receipt_long"
+      subtitle="What it costs to keep running for a month if income stopped. Entered in their own pillars — nothing to type here."
+    >
+      @if (derived().minimumMonthlyExpense === 0) {
+        <app-inline-prompt
+          message="Add your needs, loan EMIs and mandatory investments to size your emergency fund."
+          link="/spending"
+          linkLabel="Add spending"
+        />
+      }
+
+      <ul class="breakdown" data-testid="saving-breakdown">
+        @for (row of breakdown(); track row.label) {
+          <li class="breakdown__row">
+            <a class="breakdown__label" [routerLink]="row.link">
+              <span>{{ row.label }}</span>
+              <small>{{ row.hint }}</small>
+            </a>
+            <span class="breakdown__value app-num">
+              {{ row.value | currency: 'INR' : 'symbol' : '1.0-0' }}
+            </span>
+          </li>
+        }
+        <li class="breakdown__row breakdown__row--total">
+          <span class="breakdown__label"><span>Minimum monthly expense</span></span>
+          <span class="breakdown__value app-num" data-testid="saving-breakdown-total">
+            {{ derived().minimumMonthlyExpense | currency: 'INR' : 'symbol' : '1.0-0' }}
+          </span>
+        </li>
+      </ul>
+    </app-section-card>
+  </div>
+</div>

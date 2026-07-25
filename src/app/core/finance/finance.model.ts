@@ -10,6 +10,30 @@ import {
 
 export type LinePeriod = 'monthly' | 'yearly';
 
+/**
+ * Emergency-fund size as a multiple of the minimum monthly (essential) expense.
+ * Tiers come from the classic guideline: a stable earner with no dependents needs
+ * ~3×, less-stable / dependent situations 6×, the least stable 12×.
+ */
+export type EmergencyMultiplier = 3 | 6 | 12;
+
+/** One reference profile in the emergency-fund formula (mirrors the infographic). */
+export interface EmergencyTier {
+  multiplier: EmergencyMultiplier;
+  stableJob: boolean;
+  stableIncome: boolean;
+  dependents: boolean;
+}
+
+/** The three selectable profiles, exactly as laid out in the infographic. */
+export const EMERGENCY_TIERS: readonly EmergencyTier[] = [
+  { multiplier: 3, stableJob: true, stableIncome: true, dependents: false },
+  { multiplier: 6, stableJob: true, stableIncome: false, dependents: true },
+  { multiplier: 12, stableJob: false, stableIncome: false, dependents: true },
+];
+
+export const DEFAULT_EMERGENCY_MULTIPLIER: EmergencyMultiplier = 6;
+
 export interface LineItem {
   id: string;
   type: string;
@@ -68,6 +92,8 @@ export interface FinanceInputs {
     wants: LineItem[];
   };
   loan: { emis: LineItem[] };
+  /** Saving pillar: the chosen emergency-fund multiplier (× essential expense). */
+  saving: { emergencyMultiplier: EmergencyMultiplier };
   insurance: { premiums: LineItem[] };
   // Mandatory (EPF/NPS) → bucketed under Living; voluntary → Growth & Freedom.
   investing: { mandatory: LineItem[]; voluntary: LineItem[] };
@@ -99,6 +125,16 @@ export interface DerivedFinance {
   netIncome: number;
   minimumIncome: number;
   surplus: number;
+  /**
+   * Minimum monthly expense to keep running if income stopped — the basis for the
+   * emergency fund. = needs (spending) + loan EMIs + mandatory investments.
+   * (`totalNeeds` already rolls in loan EMIs, so this is `totalNeeds + mandatoryInvestments`.)
+   */
+  minimumMonthlyExpense: number;
+  /** Chosen emergency-fund multiplier (× essential expense). */
+  emergencyMultiplier: EmergencyMultiplier;
+  /** Recommended emergency-fund corpus = minimumMonthlyExpense × emergencyMultiplier. */
+  emergencyTarget: number;
   /** Mandatory investments (EPF/NPS) — counted under Living. */
   mandatoryInvestments: number;
   discretionaryInvestments: number;
@@ -174,7 +210,8 @@ export function makeMonths(base: number): MonthSalary[] {
 /** Annual total from the 12-month breakdown: Σ(base + bonus). */
 export function sumMonths(months: readonly MonthSalary[]): number {
   return months.reduce(
-    (sum, m) => sum + (Number.isFinite(m.base) ? m.base : 0) + (Number.isFinite(m.bonus) ? m.bonus : 0),
+    (sum, m) =>
+      sum + (Number.isFinite(m.base) ? m.base : 0) + (Number.isFinite(m.bonus) ? m.bonus : 0),
     0,
   );
 }
@@ -199,6 +236,7 @@ export const DEFAULT_FINANCE_INPUTS: FinanceInputs = {
   ideas: [],
   spending: { needs: [], wants: [] },
   loan: { emis: [] },
+  saving: { emergencyMultiplier: DEFAULT_EMERGENCY_MULTIPLIER },
   insurance: {
     // Insurance is usually paid yearly.
     premiums: [
@@ -236,7 +274,7 @@ export function deriveFinance(
   const annualGross = months && months.length ? sumMonths(months) : gross * 12;
   const shortTermSavings = Math.max(0, inputs.income.shortTermSavings || 0);
 
-  const totalLoanEmis = sumLineItems(inputs.loan.emis);
+  const totalLoanEmis = sumLineItemsMonthly(inputs.loan.emis); // period-aware (yearly ÷ 12)
   const totalNeeds = sumLineItems(inputs.spending.needs) + totalLoanEmis; // EMIs roll into Needs
   const totalWants = sumLineItems(inputs.spending.wants);
   const totalInsurance = sumLineItemsMonthly(inputs.insurance.premiums); // period-aware (yearly ÷ 12)
@@ -253,6 +291,12 @@ export function deriveFinance(
   // Literal spec formula (subtracts tax); all terms monthly.
   const minimumIncome =
     totalNeeds + totalWants + shortTermSavings + totalInsurance + totalInvestments - taxPayable;
+
+  // Emergency-fund basis: what it costs to merely keep running for a month —
+  // needs (spending) + loan EMIs (both in totalNeeds) + mandatory investments.
+  const minimumMonthlyExpense = totalNeeds + mandatoryInvestments;
+  const emergencyMultiplier = inputs.saving?.emergencyMultiplier ?? DEFAULT_EMERGENCY_MULTIPLIER;
+  const emergencyTarget = minimumMonthlyExpense * emergencyMultiplier;
 
   // Monthly spend-allocation buckets:
   //  · Living  = needs + wants + mandatory investments (EPF/NPS)
@@ -277,6 +321,9 @@ export function deriveFinance(
     netIncome,
     minimumIncome,
     surplus: netIncome - minimumIncome,
+    minimumMonthlyExpense,
+    emergencyMultiplier,
+    emergencyTarget,
     mandatoryInvestments,
     discretionaryInvestments,
     allocation: {

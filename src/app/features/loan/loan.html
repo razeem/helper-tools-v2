@@ -1,0 +1,35 @@
+<div class="app-page">
+  <app-page-header
+    title="Loan"
+    subtitle="Declare your EMIs — they roll into your monthly Needs"
+    icon="account_balance"
+  />
+
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-5">
+    <app-stat-tile
+      label="Total EMIs"
+      [value]="derived().totalLoanEmis | currency: 'INR' : 'symbol' : '1.0-0'"
+      hint="per month"
+      icon="account_balance"
+      data-testid="loan-total-tile"
+    />
+  </div>
+
+  <app-section-card
+    title="EMIs"
+    eyebrow="Owned here · monthly · → Needs"
+    icon="request_quote"
+    subtitle="Loan repayments — home, car, personal. Yearly-billed loans are converted to a monthly figure."
+  >
+    <app-line-item-list
+      [ops]="emis"
+      typeLabel="Loan"
+      valueLabel="EMI"
+      addLabel="Add loan"
+      emptyText="No loans declared yet."
+      testid="loan"
+      [allowPeriod]="true"
+      defaultPeriod="monthly"
+    />
+  </app-section-card>
+</div>

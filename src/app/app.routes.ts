@@ -38,14 +38,14 @@ export const PILLARS: Pillar[] = [
     title: 'Saving',
     icon: 'savings',
     description: 'Build your safety net.',
-    status: 'soon',
+    status: 'active',
   },
   {
     path: 'loan',
     title: 'Loan',
     icon: 'account_balance',
     description: 'Manage borrowing and EMIs.',
-    status: 'soon',
+    status: 'active',
   },
   {
     path: 'insurance',
@@ -70,16 +70,6 @@ export const PILLARS: Pillar[] = [
   },
 ];
 
-function comingSoon(path: string, title: string, icon: string, description: string) {
-  return {
-    path,
-    title: `${title} · Personal Finance`,
-    data: { title, icon, subtitle: description },
-    loadComponent: () =>
-      import('./features/coming-soon-page/coming-soon-page').then((m) => m.ComingSoonPage),
-  };
-}
-
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
   {
@@ -97,8 +87,16 @@ export const routes: Routes = [
     title: 'Spending · Personal Finance',
     loadComponent: () => import('./features/spending/spending').then((m) => m.Spending),
   },
-  comingSoon('saving', 'Saving', 'savings', 'Build your safety net.'),
-  comingSoon('loan', 'Loan', 'account_balance', 'Manage borrowing and EMIs.'),
+  {
+    path: 'saving',
+    title: 'Saving · Personal Finance',
+    loadComponent: () => import('./features/saving/saving').then((m) => m.Saving),
+  },
+  {
+    path: 'loan',
+    title: 'Loan · Personal Finance',
+    loadComponent: () => import('./features/loan/loan').then((m) => m.Loan),
+  },
   {
     path: 'insurance',
     title: 'Insurance · Personal Finance',
