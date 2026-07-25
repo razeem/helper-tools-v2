@@ -1,7 +1,7 @@
 <div class="app-page">
   <app-page-header
     title="Tax"
-    subtitle="Old regime · figures use your shared Gross Income"
+    subtitle="Assessed yearly on your annual gross (monthly income × 12)"
     icon="receipt_long"
   >
     <div actions class="flex gap-2">
@@ -19,7 +19,11 @@
     </div>
   </app-page-header>
 
-  <mat-tab-group animationDuration="200ms">
+  <mat-tab-group
+    animationDuration="200ms"
+    [selectedIndex]="selectedTab()"
+    (selectedIndexChange)="onTabChange($event)"
+  >
     <!-- Calculator -->
     <mat-tab label="Calculator">
       <div class="tab">

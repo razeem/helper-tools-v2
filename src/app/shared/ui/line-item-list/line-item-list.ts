@@ -1,12 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ListOps } from '../../../core/finance/finance-store';
-import { LineItem, makeLineItem, sumLineItems } from '../../../core/finance/finance.model';
+import {
+  LinePeriod,
+  LineItem,
+  makeLineItem,
+  sumLineItemsMonthly,
+} from '../../../core/finance/finance.model';
 
 /**
  * Editable list of `{ type, value }` rows bound to a `ListOps<LineItem>` from the
@@ -18,16 +25,32 @@ import { LineItem, makeLineItem, sumLineItems } from '../../../core/finance/fina
   imports: [
     CurrencyPipe,
     FormsModule,
+    DragDropModule,
     MatIconModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatFormFieldModule,
     MatInputModule,
   ],
   template: `
-    <div class="list">
+    <div
+      class="list"
+      [class.list--period]="allowPeriod()"
+      cdkDropList
+      (cdkDropListDropped)="drop($event)"
+    >
       @for (item of ops().items(); track item.id) {
-        <div class="row" [attr.data-testid]="testid() + '-row'">
-          <mat-form-field appearance="outline" class="row__type">
+        <div class="row" cdkDrag [attr.data-testid]="testid() + '-row'">
+          <button
+            type="button"
+            class="row__handle"
+            cdkDragHandle
+            aria-label="Drag to reorder"
+            [attr.data-testid]="testid() + '-drag'"
+          >
+            <mat-icon>drag_indicator</mat-icon>
+          </button>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="row__type">
             <mat-label>{{ typeLabel() }}</mat-label>
             <input
               matInput
@@ -36,7 +59,7 @@ import { LineItem, makeLineItem, sumLineItems } from '../../../core/finance/fina
               [attr.data-testid]="testid() + '-type'"
             />
           </mat-form-field>
-          <mat-form-field appearance="outline" class="row__value">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="row__value">
             <mat-label>{{ valueLabel() }}</mat-label>
             <span matTextPrefix>₹&nbsp;</span>
             <input
@@ -49,6 +72,18 @@ import { LineItem, makeLineItem, sumLineItems } from '../../../core/finance/fina
               [attr.data-testid]="testid() + '-value'"
             />
           </mat-form-field>
+          @if (allowPeriod()) {
+            <mat-button-toggle-group
+              class="row__period"
+              [value]="item.period ?? 'monthly'"
+              (change)="ops().update(item.id, { period: $event.value })"
+              [attr.data-testid]="testid() + '-period'"
+              aria-label="Premium frequency"
+            >
+              <mat-button-toggle value="monthly">/mo</mat-button-toggle>
+              <mat-button-toggle value="yearly">/yr</mat-button-toggle>
+            </mat-button-toggle-group>
+          }
           <button
             mat-icon-button
             type="button"
@@ -87,9 +122,54 @@ import { LineItem, makeLineItem, sumLineItems } from '../../../core/finance/fina
     }
     .row {
       display: grid;
-      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto;
-      gap: 0.75rem;
+      grid-template-columns: auto minmax(0, 1.5fr) minmax(0, 1fr) auto;
+      gap: 0.5rem;
       align-items: center;
+      background: var(--bg-card, transparent);
+      border-radius: var(--r-control);
+    }
+    .list--period .row {
+      grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr) auto auto;
+    }
+    .row__period {
+      height: 40px;
+    }
+    .row__period .mat-button-toggle {
+      font-size: 0.72rem;
+    }
+    .row__handle {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 40px;
+      border: 0;
+      background: transparent;
+      color: var(--mat-sys-on-surface-variant);
+      cursor: grab;
+      touch-action: none;
+    }
+    .row__handle:active {
+      cursor: grabbing;
+    }
+    .row__handle mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+    /* While dragging, keep the row styled and animate the others smoothly. */
+    .cdk-drag-preview {
+      box-shadow: var(--app-elevation-hover);
+      border-radius: var(--r-control);
+      background: var(--bg-elev, #fff);
+    }
+    .cdk-drag-placeholder {
+      opacity: 0.35;
+    }
+    .cdk-drag-animating {
+      transition: transform 220ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    .list.cdk-drop-list-dragging .row:not(.cdk-drag-placeholder) {
+      transition: transform 220ms cubic-bezier(0.2, 0, 0, 1);
     }
     mat-form-field {
       width: 100%;
@@ -111,10 +191,10 @@ import { LineItem, makeLineItem, sumLineItems } from '../../../core/finance/fina
     }
     @media (max-width: 560px) {
       .row {
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: auto minmax(0, 1fr) auto;
       }
       .row__value {
-        grid-column: 1;
+        grid-column: 2;
       }
     }
   `,
@@ -126,10 +206,19 @@ export class LineItemList {
   readonly addLabel = input<string>('Add row');
   readonly emptyText = input<string>('Nothing added yet.');
   readonly testid = input<string>('line-item');
+  /** Show a per-row monthly/yearly toggle (e.g. insurance premiums). */
+  readonly allowPeriod = input<boolean>(false);
+  /** Default period for newly-added rows when `allowPeriod` is on. */
+  readonly defaultPeriod = input<LinePeriod>('monthly');
 
-  protected readonly total = computed(() => sumLineItems(this.ops().items()));
+  // Total is always the monthly-equivalent (period-aware); monthly rows are unaffected.
+  protected readonly total = computed(() => sumLineItemsMonthly(this.ops().items()));
 
   protected newItem(): LineItem {
-    return makeLineItem();
+    return makeLineItem('', 0, this.allowPeriod() ? this.defaultPeriod() : undefined);
+  }
+
+  protected drop(event: CdkDragDrop<unknown>): void {
+    this.ops().reorder(event.previousIndex, event.currentIndex);
   }
 }

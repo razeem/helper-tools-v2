@@ -2,8 +2,9 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   // Seed a known gross via the Income pillar (single source of truth).
+  // Gross is MONTHLY now: ₹1,00,000/mo → ₹12,00,000/yr (annual old-regime tax ₹1,63,800).
   await page.goto('/income');
-  await page.getByTestId('income-gross').fill('1200000');
+  await page.getByTestId('income-gross').fill('100000');
   await page.goto('/tax');
 });
 
@@ -20,11 +21,12 @@ test('recomputes when a deduction changes', async ({ page }) => {
 test('regime comparer highlights the cheaper regime', async ({ page }) => {
   await page.getByRole('tab', { name: 'Regime comparer' }).click();
   await expect(page.getByTestId('compare-old')).toContainText('163,800');
-  await expect(page.getByTestId('compare-new')).toContainText('71,500');
+  // FY 2025-26: ₹12L under the new regime is fully rebated to ₹0.
+  await expect(page.getByTestId('compare-new')).toContainText('₹0');
   await expect(page.getByTestId('compare-recommendation')).toContainText('new');
 });
 
 test('switching to the new regime changes the tax', async ({ page }) => {
   await page.getByTestId('tax-regime').getByText('New').click();
-  await expect(page.getByTestId('tax-total-tile')).toContainText('71,500');
+  await expect(page.getByTestId('tax-total-tile')).toContainText('₹0');
 });

@@ -1,7 +1,7 @@
 <div class="app-page">
   <app-page-header
     title="Dashboard"
-    subtitle="Everything you enter across the pillars, connected in one picture."
+    subtitle="Your monthly money, connected across every pillar in one picture."
     icon="dashboard"
   />
 
@@ -9,58 +9,115 @@
     <app-stat-tile
       label="Gross income"
       [value]="derived().gross | currency: 'INR' : 'symbol' : '1.0-0'"
+      hint="per month"
       icon="payments"
     />
     <app-stat-tile
       label="Tax payable"
       [value]="derived().taxPayable | currency: 'INR' : 'symbol' : '1.0-0'"
+      hint="per month · effective"
       icon="receipt_long"
     />
     <app-stat-tile
       label="Net income"
       [value]="derived().netIncome | currency: 'INR' : 'symbol' : '1.0-0'"
+      hint="per month"
       icon="savings"
     />
     <app-stat-tile
       label="Surplus vs minimum"
       [value]="derived().surplus | currency: 'INR' : 'symbol' : '1.0-0'"
       [tone]="derived().surplus >= 0 ? 'positive' : 'negative'"
+      hint="per month"
       icon="trending_up"
       data-testid="dashboard-surplus"
     />
   </div>
 
   <app-section-card
-    title="Where your income goes"
-    eyebrow="Allocation"
-    icon="donut_large"
-    subtitle="Segments are sized against your gross income."
+    title="Monthly spend allocation"
+    eyebrow="Balance"
+    icon="balance"
+    subtitle="How your money splits across Living, Safety and Growth & Freedom — drag to set your target, compare against your actuals."
   >
-    @if (allocation().segments.length > 0) {
-      <div class="bar" role="img" aria-label="Income allocation">
-        @for (seg of allocation().segments; track seg.label) {
-          <span
-            class="bar__seg"
-            [style.width]="segmentWidth(seg.value)"
-            [style.background]="seg.color"
-            [title]="seg.label"
-          ></span>
+    <div class="alloc">
+      <!-- Draggable target split — two handles always keep the ratio at 100%. -->
+      <div class="split" role="group" aria-label="Target allocation ratio">
+        @for (b of allocationView(); track b.key) {
+          <div
+            class="split__seg"
+            [style.width.%]="b.target"
+            [style.background]="b.color"
+            [attr.data-testid]="'target-' + b.key"
+          >
+            <span class="split__seg-label">{{ b.label }}</span>
+            <span class="split__seg-pct app-num">{{ b.target }}%</span>
+          </div>
+        }
+        <button
+          class="split__handle"
+          type="button"
+          [style.left.%]="boundary1()"
+          (pointerdown)="onHandleDown('h1', $event)"
+          (keydown)="onHandleKey('h1', $event)"
+          role="slider"
+          [attr.aria-valuenow]="boundary1()"
+          aria-label="Living / Safety boundary"
+          data-testid="split-handle-1"
+        ></button>
+        <button
+          class="split__handle"
+          type="button"
+          [style.left.%]="boundary2()"
+          (pointerdown)="onHandleDown('h2', $event)"
+          (keydown)="onHandleKey('h2', $event)"
+          role="slider"
+          [attr.aria-valuenow]="boundary2()"
+          aria-label="Safety / Growth boundary"
+          data-testid="split-handle-2"
+        ></button>
+      </div>
+
+      <!-- Actual vs target per bucket -->
+      <div class="alloc__rows">
+        @for (b of allocationView(); track b.key) {
+          <div class="alloc-row" [attr.data-testid]="'alloc-' + b.key">
+            <div class="alloc-row__head">
+              <span class="alloc-row__dot" [style.background]="b.color"></span>
+              <span class="alloc-row__name">{{ b.label }}</span>
+              <span class="alloc-row__amt app-num">{{
+                b.amount | currency: 'INR' : 'symbol' : '1.0-0'
+              }}</span>
+            </div>
+            <div class="alloc-row__track">
+              @for (s of b.segments; track s.label) {
+                <span
+                  class="alloc-row__seg"
+                  [style.width.%]="s.pct"
+                  [style.background]="s.color"
+                  [title]="s.label"
+                ></span>
+              }
+              <span class="alloc-row__marker" [style.left.%]="b.target" title="Target"></span>
+            </div>
+            <div class="alloc-row__foot">
+              <div class="alloc-row__legend">
+                @for (s of b.segments; track s.label) {
+                  <span class="alloc-row__leg">
+                    <span class="alloc-row__leg-dot" [style.background]="s.color"></span>
+                    {{ s.label }}
+                    <span class="app-num">{{ s.amount | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+                  </span>
+                }
+              </div>
+              <span class="alloc-row__pcts app-num"
+                >Actual {{ b.actual | number: '1.0-0' }}% · Target {{ b.target }}%</span
+              >
+            </div>
+          </div>
         }
       </div>
-      <ul class="legend">
-        @for (seg of allocation().segments; track seg.label) {
-          <li class="legend__item">
-            <span class="legend__dot" [style.background]="seg.color"></span>
-            {{ seg.label }}
-            <span class="legend__val app-num">{{
-              seg.value | currency: 'INR' : 'symbol' : '1.0-0'
-            }}</span>
-          </li>
-        }
-      </ul>
-    } @else {
-      <p class="empty">Add your income and spending to see the allocation.</p>
-    }
+    </div>
   </app-section-card>
 
   <h2 class="section-title">Pillars</h2>

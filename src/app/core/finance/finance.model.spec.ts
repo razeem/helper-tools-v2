@@ -4,7 +4,9 @@ import {
   FinanceInputs,
   icerScore,
   makeLineItem,
+  makeMonths,
   sumLineItems,
+  sumMonths,
 } from './finance.model';
 
 function li(value: number) {
@@ -26,16 +28,35 @@ describe('icerScore', () => {
   });
 });
 
-describe('deriveFinance', () => {
+describe('deriveFinance (monthly inputs, annualised tax)', () => {
+  // Gross is monthly: ₹1,00,000/mo → ₹12,00,000/yr, so the annual old-regime tax
+  // is still ₹1,63,800 (₹13,650/mo). Spending/savings/etc. are monthly too.
   const inputs: FinanceInputs = {
     ...DEFAULT_FINANCE_INPUTS,
-    income: { gross: 1_200_000, shortTermSavings: 5_000 },
+    income: { gross: 100_000, shortTermSavings: 5_000, months: makeMonths(100_000) },
     spending: { needs: [li(20_000), li(5_000)], wants: [li(10_000)] },
     loan: { emis: [li(15_000)] },
     insurance: { premiums: [li(2_000)] },
-    investing: { contributions: [li(3_000)] },
+    investing: { mandatory: [], voluntary: [li(3_000)] },
     tax: { regime: 'old', deductions: DEFAULT_FINANCE_INPUTS.tax.deductions },
   };
+
+  it('annualises gross for the tax computation (fallback: no breakdown)', () => {
+    const d = deriveFinance(inputs);
+    expect(d.gross).toBe(100_000); // monthly
+    expect(d.annualGross).toBe(1_200_000); // × 12
+    expect(d.taxAnnual).toBeCloseTo(163_800, 5); // annual old-regime tax
+  });
+
+  it('annual gross sums the 12-month breakdown incl. bonuses', () => {
+    const months = makeMonths(100_000); // 12 × 100,000 = 1,200,000
+    months[11] = { base: 100_000, bonus: 300_000 }; // March bonus
+    const d = deriveFinance({ ...inputs, income: { ...inputs.income, months } });
+    expect(sumMonths(months)).toBe(1_500_000);
+    expect(d.annualGross).toBe(1_500_000); // 1,200,000 + 300,000 bonus
+    // Budget still uses the typical monthly base, not the bonus-inflated annual.
+    expect(d.gross).toBe(100_000);
+  });
 
   it('rolls loan EMIs into total needs', () => {
     const d = deriveFinance(inputs);
@@ -44,17 +65,99 @@ describe('deriveFinance', () => {
     expect(d.totalWants).toBe(10_000);
   });
 
-  it('derives tax, net income, minimum income and surplus (old regime)', () => {
+  it('buckets money into Living / Safety / Growth & Freedom', () => {
+    const d = deriveFinance({
+      ...inputs,
+      investing: {
+        mandatory: [makeLineItem('EPF', 3_000)],
+        voluntary: [makeLineItem('MF', 2_000)],
+      },
+    });
+    expect(d.mandatoryInvestments).toBe(3_000);
+    expect(d.discretionaryInvestments).toBe(2_000);
+    // Living = needs 40k + wants 10k + mandatory EPF 3k
+    expect(d.allocation.living).toBe(53_000);
+    // Safety = insurance 2k + short-term savings 5k
+    expect(d.allocation.safety).toBe(7_000);
+    // Growth & Freedom = discretionary MF 2k
+    expect(d.allocation.growthFreedom).toBe(2_000);
+    expect(d.allocation.total).toBe(62_000);
+  });
+
+  it('derives MONTHLY tax, net income, minimum income and surplus (old regime)', () => {
     const d = deriveFinance(inputs);
-    expect(d.taxPayable).toBeCloseTo(163_800, 5);
-    expect(d.netIncome).toBeCloseTo(1_036_200, 5);
-    // 40,000 + 10,000 + 5,000 + 2,000 + 3,000 − 163,800
-    expect(d.minimumIncome).toBeCloseTo(-103_800, 5);
-    expect(d.surplus).toBeCloseTo(1_140_000, 5);
+    expect(d.taxPayable).toBeCloseTo(13_650, 5); // 163,800 / 12
+    expect(d.netIncome).toBeCloseTo(86_350, 5); // 100,000 − 13,650
+    // 40,000 + 10,000 + 5,000 + 2,000 + 3,000 − 13,650
+    expect(d.minimumIncome).toBeCloseTo(46_350, 5);
+    // surplus = monthly gross − monthly outgoings = 100,000 − 60,000
+    expect(d.surplus).toBeCloseTo(40_000, 5);
   });
 
   it('reacts to the selected tax regime', () => {
+    const asOld = deriveFinance({ ...inputs, tax: { ...inputs.tax, regime: 'old' } });
     const asNew = deriveFinance({ ...inputs, tax: { ...inputs.tax, regime: 'new' } });
-    expect(asNew.taxPayable).toBeCloseTo(71_500, 5);
+    // FY 2025-26: ₹12L annual gross under the new regime is fully rebated (₹0 tax);
+    // the old regime still taxes it — the two regimes must differ.
+    expect(asOld.taxPayable).toBeCloseTo(13_650, 5);
+    expect(asNew.taxPayable).toBe(0);
+  });
+});
+
+describe('sumLineItems — edge cases', () => {
+  it('ignores NaN and Infinity but keeps negatives', () => {
+    expect(sumLineItems([li(NaN), li(10), li(Infinity)])).toBe(10);
+    expect(sumLineItems([li(-5), li(10)])).toBe(5);
+  });
+});
+
+describe('icerScore — edge cases', () => {
+  it('returns the min and max cleanly', () => {
+    expect(icerScore({ id: 'a', name: '', interest: 1, capability: 1, effortlessness: 1, return: 1 })).toBe(1);
+    expect(icerScore({ id: 'b', name: '', interest: 5, capability: 5, effortlessness: 5, return: 5 })).toBe(5);
+  });
+});
+
+describe('deriveFinance — edge cases', () => {
+  const empty: FinanceInputs = {
+    income: { gross: 0, shortTermSavings: 0, months: [] },
+    goals: { mustHave: [], goodToHave: [] },
+    ideas: [],
+    spending: { needs: [], wants: [] },
+    loan: { emis: [] },
+    insurance: { premiums: [] },
+    investing: { mandatory: [], voluntary: [] },
+    tax: { regime: 'old', deductions: DEFAULT_FINANCE_INPUTS.tax.deductions },
+    allocationTarget: { living: 75, safety: 15, growth: 10 },
+  };
+
+  it('produces all zeros for an empty model', () => {
+    const d = deriveFinance(empty);
+    expect(d.gross).toBe(0);
+    expect(d.taxPayable).toBe(0);
+    expect(d.totalNeeds).toBe(0);
+    expect(d.minimumIncome).toBe(0);
+    expect(d.surplus).toBe(0);
+  });
+
+  it('reports a deficit (negative surplus) when spending exceeds income', () => {
+    const d = deriveFinance({
+      ...empty,
+      income: { gross: 30_000, shortTermSavings: 0, months: [] },
+      spending: { needs: [li(50_000)], wants: [] },
+      tax: { regime: 'new', deductions: empty.tax.deductions },
+    });
+    // surplus = gross − (needs+wants+savings+insurance+investments) = 30,000 − 50,000
+    expect(d.surplus).toBeCloseTo(-20_000, 5);
+  });
+
+  it('new-regime 87A rebate keeps tax at zero for modest income', () => {
+    const d = deriveFinance({
+      ...empty,
+      income: { gross: 50_000, shortTermSavings: 0, months: [] }, // ₹6,00,000/yr — within the rebate
+      tax: { regime: 'new', deductions: empty.tax.deductions },
+    });
+    expect(d.taxPayable).toBe(0);
+    expect(d.netIncome).toBe(50_000); // monthly, no tax
   });
 });

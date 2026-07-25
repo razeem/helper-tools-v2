@@ -30,22 +30,28 @@ import { MatIconModule } from '@angular/material/icon';
     </a>
   `,
   styles: `
+    :host {
+      display: block;
+      height: 100%;
+    }
     .pillar {
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
+      height: 100%;
+      box-sizing: border-box;
       padding: 1.25rem;
       text-decoration: none;
       color: inherit;
       transition:
-        transform 160ms ease,
-        box-shadow 160ms ease,
-        border-color 160ms ease;
+        transform 220ms var(--ease-spring, ease),
+        box-shadow 220ms ease,
+        border-color 220ms ease;
     }
     .pillar:hover {
-      transform: translateY(-3px);
-      border-color: var(--mat-sys-primary);
-      box-shadow: var(--app-elevation-hover);
+      transform: translateY(-4px);
+      border-color: color-mix(in srgb, var(--mat-sys-primary) 55%, var(--mat-sys-outline-variant));
+      box-shadow: var(--app-elevation-hover), var(--app-inset-highlight);
     }
     .pillar__icon {
       display: grid;

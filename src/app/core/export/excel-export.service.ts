@@ -29,6 +29,19 @@ export interface ExcelSheet {
   rows: Record<string, unknown>[];
 }
 
+/** One titled table; several stack vertically inside a single worksheet tab. */
+export interface ExcelBlock {
+  title?: string;
+  headers: string[];
+  rows: (string | number)[][];
+}
+
+/** A worksheet composed of several stacked tables (keeps the tab count low). */
+export interface ComposedSheet {
+  name: string;
+  blocks: ExcelBlock[];
+}
+
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 /**
@@ -57,6 +70,46 @@ export class ExcelExportService {
       headerRow.alignment = { vertical: 'middle' };
       for (const row of sheet.rows) {
         ws.addRow(row);
+      }
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: XLSX_MIME });
+    downloadBlob(blob, fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`);
+    return blob;
+  }
+
+  /**
+   * Write worksheets that each stack several titled tables (with a spacer row
+   * between them). Lets many small sections share one tab instead of exploding
+   * into a tab each.
+   */
+  async exportComposed(fileName: string, sheets: ComposedSheet[]): Promise<Blob> {
+    const { Workbook } = await loadExcelJs();
+    const workbook = new Workbook();
+    workbook.creator = 'Helper Tools';
+    workbook.created = new Date();
+
+    for (const sheet of sheets) {
+      const ws = workbook.addWorksheet(sheet.name);
+      let maxCols = 1;
+      for (const block of sheet.blocks) {
+        maxCols = Math.max(maxCols, block.headers.length);
+        if (block.title) {
+          const titleRow = ws.addRow([block.title]);
+          titleRow.font = { bold: true, size: 13 };
+        }
+        const headerRow = ws.addRow(block.headers);
+        headerRow.font = { bold: true };
+        headerRow.alignment = { vertical: 'middle' };
+        for (const row of block.rows) {
+          ws.addRow(row);
+        }
+        ws.addRow([]); // spacer between blocks
+      }
+      ws.getColumn(1).width = 32;
+      for (let c = 2; c <= maxCols; c++) {
+        ws.getColumn(c).width = 20;
       }
     }
 

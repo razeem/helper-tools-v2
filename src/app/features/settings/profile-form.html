@@ -54,20 +54,12 @@
   </form>
 
   <div class="profile__actions">
+    <p class="profile__export-note">
+      Export moved to the <strong>Dashboard → Export workbook</strong> (all pillars in one file).
+    </p>
     <button mat-stroked-button type="button" (click)="clear()" data-testid="profile-reset">
       <mat-icon>restart_alt</mat-icon>
       Clear
-    </button>
-    <button
-      mat-flat-button
-      color="primary"
-      type="button"
-      [disabled]="exporting()"
-      (click)="exportXlsx()"
-      data-testid="profile-export"
-    >
-      <mat-icon>download</mat-icon>
-      Export to Excel
     </button>
   </div>
 </div>

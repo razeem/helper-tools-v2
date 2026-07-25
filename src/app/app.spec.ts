@@ -21,7 +21,7 @@ describe('App', () => {
   it('lists the navigable tools', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
-    const links = fixture.nativeElement.querySelectorAll('mat-nav-list a');
+    const links = fixture.nativeElement.querySelectorAll('nav.nav a.nav__item');
     expect(links.length).toBeGreaterThan(0);
   });
 });

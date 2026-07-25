@@ -3,17 +3,17 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { PILLARS } from './app.routes';
 import { PreferencesStore } from './core/preferences/preferences-store';
 import { ProfileStore } from './core/profile/profile-store';
+import { FinanceWorkbookService } from './core/export/finance-workbook.service';
 
 @Component({
   selector: 'app-root',
@@ -22,9 +22,7 @@ import { ProfileStore } from './core/profile/profile-store';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    MatToolbarModule,
     MatSidenavModule,
-    MatListModule,
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
@@ -37,11 +35,28 @@ export class App {
   private readonly breakpoints = inject(BreakpointObserver);
   private readonly prefs = inject(PreferencesStore);
   private readonly dialog = inject(MatDialog);
+  private readonly workbook = inject(FinanceWorkbookService);
+  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly profile = inject(ProfileStore);
   protected readonly pillars = PILLARS;
   protected readonly collapsed = this.prefs.sidebarCollapsed;
   protected readonly theme = this.prefs.theme;
+  protected readonly exporting = signal(false);
+
+  /** Export the whole connected model (all pillars) as one .xlsx workbook — global action. */
+  protected async exportWorkbook(): Promise<void> {
+    this.exporting.set(true);
+    try {
+      await this.workbook.export('personal-finance');
+      this.snackBar.open('Exported personal-finance.xlsx', 'Dismiss', { duration: 3000 });
+    } catch (err) {
+      console.error(err);
+      this.snackBar.open('Export failed — see console', 'Dismiss', { duration: 4000 });
+    } finally {
+      this.exporting.set(false);
+    }
+  }
 
   /** On handset/tablet the sidenav is an overlay controlled by `mobileOpen`. */
   protected readonly isHandset = toSignal(

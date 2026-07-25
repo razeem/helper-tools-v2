@@ -1,7 +1,7 @@
 <div class="app-page">
   <app-page-header
     title="Spending"
-    subtitle="Needs and Wants feed your Minimum Income automatically"
+    subtitle="Your monthly Needs and Wants feed Minimum Income automatically"
     icon="shopping_cart"
   />
 
@@ -9,12 +9,14 @@
     <app-stat-tile
       label="Total needs"
       [value]="derived().totalNeeds | currency: 'INR' : 'symbol' : '1.0-0'"
+      hint="per month"
       icon="check_circle"
       data-testid="spending-total-needs"
     />
     <app-stat-tile
       label="Total wants"
       [value]="derived().totalWants | currency: 'INR' : 'symbol' : '1.0-0'"
+      hint="per month"
       icon="redeem"
       data-testid="spending-total-wants"
     />
@@ -23,14 +25,14 @@
   <div class="lists">
     <app-section-card
       title="Needs"
-      eyebrow="Must-have"
+      eyebrow="Must-have · monthly"
       icon="check_circle"
-      subtitle="Must-have expenses that keep life running — rent, food, utilities."
+      subtitle="Must-have expenses you pay each month — rent, food, utilities."
     >
       <app-line-item-list
         [ops]="needs"
         typeLabel="Expense"
-        valueLabel="Monthly / yearly"
+        valueLabel="Amount / month"
         addLabel="Add need"
         emptyText="No needs added yet."
         testid="need"
@@ -39,14 +41,14 @@
 
     <app-section-card
       title="Wants"
-      eyebrow="Nice-to-have"
+      eyebrow="Nice-to-have · monthly"
       icon="redeem"
-      subtitle="Lifestyle spending you could live without if needed."
+      subtitle="Monthly lifestyle spending you could live without if needed."
     >
       <app-line-item-list
         [ops]="wants"
         typeLabel="Expense"
-        valueLabel="Monthly / yearly"
+        valueLabel="Amount / month"
         addLabel="Add want"
         emptyText="No wants added yet."
         testid="want"

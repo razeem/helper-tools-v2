@@ -1,0 +1,35 @@
+<div class="app-page">
+  <app-page-header
+    title="Insurance"
+    subtitle="Declare your monthly premiums — health, life and term cover"
+    icon="health_and_safety"
+  />
+
+  <div class="stat-row" style="margin-bottom: 1.25rem">
+    <app-stat-tile
+      label="Total premiums"
+      [value]="derived().totalInsurance | currency: 'INR' : 'symbol' : '1.0-0'"
+      hint="per month"
+      icon="health_and_safety"
+      data-testid="insurance-total-tile"
+    />
+  </div>
+
+  <app-section-card
+    title="Premiums"
+    eyebrow="Owned here · monthly"
+    icon="shield"
+    subtitle="Recurring cover you pay for — health/general insurance and term life insurance."
+  >
+    <app-line-item-list
+      [ops]="premiums"
+      typeLabel="Policy"
+      valueLabel="Premium"
+      addLabel="Add policy"
+      emptyText="No policies declared yet."
+      testid="insurance"
+      [allowPeriod]="true"
+      defaultPeriod="yearly"
+    />
+  </app-section-card>
+</div>

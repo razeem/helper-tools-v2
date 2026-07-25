@@ -7,12 +7,13 @@ import { test, expect } from '@playwright/test';
 
 test('gross entered in Income flows into Tax without re-entry', async ({ page }) => {
   await page.goto('/income');
-  await page.getByTestId('income-gross').fill('1000000');
+  // Monthly gross ₹1,00,000 → annualised ₹12,00,000 for tax.
+  await page.getByTestId('income-gross').fill('100000');
 
   await page.getByTestId('nav-tax').click();
   await expect(page).toHaveURL(/\/tax$/);
-  // Gross 1,000,000 − 50,000 standard deduction = 950,000 net taxable (old regime).
-  await expect(page.getByText(/950,000/).first()).toBeVisible();
+  // Annual gross 1,200,000 − 50,000 standard deduction = 1,150,000 net taxable (old regime).
+  await expect(page.getByText(/1,150,000/).first()).toBeVisible();
   await expect(page.getByTestId('tax-total-tile')).toBeVisible();
 
   // Tax has no gross input of its own — it's owned by Income only.

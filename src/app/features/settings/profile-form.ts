@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,7 +9,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ProfileStore } from '../../core/profile/profile-store';
 import { profileTextFields } from '../../core/profile/profile.model';
 import { compressImage } from '../../core/image/image-compression';
-import { ExcelExportService } from '../../core/export/excel-export.service';
 
 @Component({
   selector: 'app-profile-form',
@@ -26,12 +25,10 @@ import { ExcelExportService } from '../../core/export/excel-export.service';
 })
 export class ProfileForm {
   private readonly profile = inject(ProfileStore);
-  private readonly excel = inject(ExcelExportService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly photoUrl = this.profile.photoUrl;
-  protected readonly exporting = signal(false);
 
   protected readonly form = this.fb.group({
     name: this.fb.control(''),
@@ -116,41 +113,5 @@ export class ProfileForm {
       { emitEvent: false },
     );
     this.snackBar.open('Profile cleared', 'Dismiss', { duration: 2000 });
-  }
-
-  protected async exportXlsx(): Promise<void> {
-    this.exporting.set(true);
-    try {
-      await this.profile.flush();
-      const data = this.profile.value();
-      await this.excel.export('profile', [
-        {
-          name: 'Profile',
-          columns: [
-            { header: 'Field', key: 'field', width: 24 },
-            { header: 'Value', key: 'value', width: 40 },
-          ],
-          rows: [
-            { field: 'Name', value: data.name },
-            { field: 'Email', value: data.email },
-            { field: 'Phone', value: data.phone },
-            { field: 'Address line 1', value: data.addressLine1 },
-            { field: 'Address line 2', value: data.addressLine2 },
-            { field: 'City', value: data.city },
-            { field: 'State / Province', value: data.state },
-            { field: 'Postal code', value: data.postalCode },
-            { field: 'Country', value: data.country },
-            { field: 'Notes', value: data.notes },
-            { field: 'Photo', value: data.photo ? 'stored (WebP)' : 'none' },
-          ],
-        },
-      ]);
-      this.snackBar.open('Exported profile.xlsx', 'Dismiss', { duration: 3000 });
-    } catch (err) {
-      console.error(err);
-      this.snackBar.open('Export failed — see console', 'Dismiss', { duration: 4000 });
-    } finally {
-      this.exporting.set(false);
-    }
   }
 }

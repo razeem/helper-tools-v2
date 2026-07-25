@@ -15,18 +15,20 @@ test('exports the tax breakdown to a working .xlsx', async ({ page }) => {
   expect(statSync(path).size).toBeGreaterThan(1000);
 });
 
-test('exports the profile to a working .xlsx from settings', async ({ page }) => {
-  await page.goto('/dashboard');
-  await page.getByTestId('avatar-menu').click();
-  await page.getByTestId('open-settings').click();
-  await page.getByTestId('profile-name').fill('Grace Hopper');
-  await page.waitForTimeout(400);
+test('exports the whole-model workbook from the dashboard', async ({ page }) => {
+  // Enter data across pillars, then export one consolidated workbook.
+  await page.goto('/income');
+  await page.getByTestId('income-gross').fill('1500000');
+  await page.getByTestId('nav-spending').click();
+  await page.getByTestId('need-add').click();
+  await page.getByTestId('need-value').first().fill('20000');
 
+  await page.getByTestId('nav-dashboard').click();
   const downloadPromise = page.waitForEvent('download');
-  await page.getByTestId('profile-export').click();
+  await page.getByTestId('dashboard-export').click();
   const download = await downloadPromise;
 
-  expect(download.suggestedFilename()).toBe('profile.xlsx');
+  expect(download.suggestedFilename()).toBe('personal-finance.xlsx');
   const path = await download.path();
   expect(statSync(path).size).toBeGreaterThan(1000);
 });

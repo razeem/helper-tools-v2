@@ -5,19 +5,23 @@
     icon="payments"
   />
 
-  <mat-tab-group animationDuration="200ms">
+  <mat-tab-group
+    animationDuration="200ms"
+    [selectedIndex]="selectedTab()"
+    (selectedIndexChange)="onTabChange($event)"
+  >
     <!-- Minimum Income -->
     <mat-tab label="Minimum Income">
       <div class="tab">
         <app-section-card
-          title="Your income"
-          eyebrow="Owned here"
+          title="Your monthly income"
+          eyebrow="Owned here · monthly"
           icon="account_balance_wallet"
-          subtitle="Gross Income drives tax and net income across the app."
+          subtitle="Enter what you earn each month — it drives tax and net income across the app."
         >
           <div class="fields">
             <mat-form-field appearance="outline">
-              <mat-label>Gross annual income</mat-label>
+              <mat-label>Gross monthly income</mat-label>
               <span matTextPrefix>₹&nbsp;</span>
               <input
                 matInput
@@ -28,9 +32,12 @@
                 (ngModelChange)="setGross($event)"
                 data-testid="income-gross"
               />
+              <mat-hint
+                >≈ {{ derived().annualGross | currency: 'INR' : 'symbol' : '1.0-0' }} / year</mat-hint
+              >
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Short-term savings target</mat-label>
+              <mat-label>Short-term savings target (monthly)</mat-label>
               <span matTextPrefix>₹&nbsp;</span>
               <input
                 matInput
@@ -43,24 +50,95 @@
               />
             </mat-form-field>
           </div>
+
+          <mat-expansion-panel class="months" data-testid="salary-breakdown">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>calendar_month</mat-icon>&nbsp;Advanced · monthly breakdown
+              </mat-panel-title>
+              <mat-panel-description>
+                {{ fyLabel() }} ·
+                {{ derived().annualGross | currency: 'INR' : 'symbol' : '1.0-0' }}/yr
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <p class="months__help">
+              Months run April → March. Each starts at your declared salary — override any month
+              for a hike or cut, and add one-off <strong>bonuses</strong> separately.
+            </p>
+
+            <div class="months__grid">
+              @for (m of months(); track $index) {
+                <div class="month-row">
+                  <span class="month-row__name">{{ fyMonths[$index] }}</span>
+                  <mat-form-field appearance="outline" class="dense">
+                    <mat-label>Base</mat-label>
+                    <span matTextPrefix>₹&nbsp;</span>
+                    <input
+                      matInput
+                      type="number"
+                      min="0"
+                      inputmode="numeric"
+                      [ngModel]="m.base"
+                      (ngModelChange)="setMonthBase($index, $event)"
+                      [attr.data-testid]="'month-base-' + $index"
+                    />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="dense">
+                    <mat-label>Bonus</mat-label>
+                    <span matTextPrefix>₹&nbsp;</span>
+                    <input
+                      matInput
+                      type="number"
+                      min="0"
+                      inputmode="numeric"
+                      [ngModel]="m.bonus"
+                      (ngModelChange)="setMonthBonus($index, $event)"
+                      [attr.data-testid]="'month-bonus-' + $index"
+                    />
+                  </mat-form-field>
+                </div>
+              }
+            </div>
+
+            <div class="months__total">
+              <span>Annual total · {{ fyLabel() }}</span>
+              <strong class="app-num" data-testid="salary-annual-total">{{
+                derived().annualGross | currency: 'INR' : 'symbol' : '1.0-0'
+              }}</strong>
+            </div>
+          </mat-expansion-panel>
         </app-section-card>
 
         <div class="stat-row">
           <app-stat-tile
+            label="Income tax"
+            [value]="derived().taxPayable | currency: 'INR' : 'symbol' : '1.0-0'"
+            [hint]="
+              'per month · ' +
+              (derived().taxAnnual | currency: 'INR' : 'symbol' : '1.0-0') +
+              ' / yr'
+            "
+            icon="receipt_long"
+            data-testid="income-tax"
+          />
+          <app-stat-tile
             label="Net income"
             [value]="derived().netIncome | currency: 'INR' : 'symbol' : '1.0-0'"
-            hint="Gross − tax"
+            hint="Gross − tax · per month"
             icon="savings"
           />
           <app-stat-tile
             label="Minimum income"
             [value]="derived().minimumIncome | currency: 'INR' : 'symbol' : '1.0-0'"
+            hint="per month"
             data-testid="income-minimum"
           />
           <app-stat-tile
             label="Surplus vs minimum"
             [value]="derived().surplus | currency: 'INR' : 'symbol' : '1.0-0'"
             [tone]="derived().surplus >= 0 ? 'positive' : 'negative'"
+            hint="per month"
             data-testid="income-surplus"
           />
         </div>
@@ -103,10 +181,13 @@
     <mat-tab label="Goals">
       <div class="tab goals">
         <app-section-card title="Must have" eyebrow="Non-negotiable" icon="flag">
-          <div class="goal-list">
+          <div class="goal-list" cdkDropList (cdkDropListDropped)="dropMustHave($event)">
             @for (goal of mustHave.items(); track goal.id) {
-              <div class="goal-row">
-                <mat-form-field appearance="outline">
+              <div class="goal-row" cdkDrag>
+                <button type="button" class="goal-row__handle" cdkDragHandle aria-label="Drag to reorder">
+                  <mat-icon>drag_indicator</mat-icon>
+                </button>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
                   <input
                     matInput
                     [ngModel]="goal.text"
@@ -120,6 +201,7 @@
                   type="button"
                   aria-label="Remove goal"
                   (click)="mustHave.remove(goal.id)"
+                  data-testid="goal-must-have-remove"
                 >
                   <mat-icon>delete_outline</mat-icon>
                 </button>
@@ -138,10 +220,13 @@
         </app-section-card>
 
         <app-section-card title="Good to have" eyebrow="Aspirational" icon="star">
-          <div class="goal-list">
+          <div class="goal-list" cdkDropList (cdkDropListDropped)="dropGoodToHave($event)">
             @for (goal of goodToHave.items(); track goal.id) {
-              <div class="goal-row">
-                <mat-form-field appearance="outline">
+              <div class="goal-row" cdkDrag>
+                <button type="button" class="goal-row__handle" cdkDragHandle aria-label="Drag to reorder">
+                  <mat-icon>drag_indicator</mat-icon>
+                </button>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
                   <input
                     matInput
                     [ngModel]="goal.text"
@@ -160,7 +245,12 @@
                 </button>
               </div>
             }
-            <button mat-stroked-button type="button" (click)="addGoodToHave()">
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="addGoodToHave()"
+              data-testid="add-good-to-have"
+            >
               <mat-icon>add</mat-icon>
               Add goal
             </button>

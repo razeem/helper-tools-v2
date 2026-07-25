@@ -51,15 +51,15 @@ export const PILLARS: Pillar[] = [
     path: 'insurance',
     title: 'Insurance',
     icon: 'health_and_safety',
-    description: 'Protect against risk.',
-    status: 'soon',
+    description: 'Health, life and term cover.',
+    status: 'active',
   },
   {
     path: 'investing',
     title: 'Investing',
     icon: 'trending_up',
-    description: 'Grow your wealth.',
-    status: 'soon',
+    description: 'EPF, NPS and wealth building.',
+    status: 'active',
   },
   {
     path: 'tax',
@@ -99,8 +99,16 @@ export const routes: Routes = [
   },
   comingSoon('saving', 'Saving', 'savings', 'Build your safety net.'),
   comingSoon('loan', 'Loan', 'account_balance', 'Manage borrowing and EMIs.'),
-  comingSoon('insurance', 'Insurance', 'health_and_safety', 'Protect against risk.'),
-  comingSoon('investing', 'Investing', 'trending_up', 'Grow your wealth.'),
+  {
+    path: 'insurance',
+    title: 'Insurance · Personal Finance',
+    loadComponent: () => import('./features/insurance/insurance').then((m) => m.Insurance),
+  },
+  {
+    path: 'investing',
+    title: 'Investing · Personal Finance',
+    loadComponent: () => import('./features/investing/investing').then((m) => m.Investing),
+  },
   {
     path: 'tax',
     title: 'Tax · Personal Finance',

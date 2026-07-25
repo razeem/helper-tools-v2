@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DecimalPipe, PercentPipe } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -10,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FinanceStore } from '../../core/finance/finance-store';
+import { TaxConfigStore } from '../../core/finance/tax-config-store';
 import {
   calculateNewRegimeTax,
   calculateOldRegimeTax,
@@ -53,19 +56,43 @@ interface DeductionField {
 })
 export class Tax {
   private readonly store = inject(FinanceStore);
+  private readonly taxConfig = inject(TaxConfigStore);
   private readonly excel = inject(ExcelExportService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  // ---- Deep-linkable tabs (?tab=calculator|comparer) ----
+  private readonly tabSlugs = ['calculator', 'comparer'];
+  private readonly queryParams = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+  protected readonly selectedTab = computed(() => {
+    const idx = this.tabSlugs.indexOf(this.queryParams().get('tab') ?? '');
+    return idx >= 0 ? idx : 0;
+  });
+  protected onTabChange(index: number): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: this.tabSlugs[index] },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
 
   protected readonly inputs = this.store.inputs;
   protected readonly derived = this.store.derived;
   protected readonly result = computed(() => this.derived().tax);
-  protected readonly gross = computed(() => this.derived().gross);
+  // Tax is assessed on the ANNUAL gross (monthly income × 12).
+  protected readonly gross = computed(() => this.derived().annualGross);
+  protected readonly monthlyGross = computed(() => this.derived().gross);
   protected readonly exporting = signal(false);
 
   protected readonly comparison = computed(() => {
     const gross = this.gross();
-    const old = calculateOldRegimeTax(gross, this.inputs().tax.deductions);
-    const neu = calculateNewRegimeTax(gross);
+    const config = this.taxConfig.config();
+    const old = calculateOldRegimeTax(gross, this.inputs().tax.deductions, config);
+    const neu = calculateNewRegimeTax(gross, config);
     const better: TaxRegime = neu.totalTax <= old.totalTax ? 'new' : 'old';
     return { old, new: neu, better, saving: Math.abs(old.totalTax - neu.totalTax) };
   });

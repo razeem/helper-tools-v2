@@ -6,6 +6,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { PreferencesStore, ThemeMode } from '../../core/preferences/preferences-store';
 import { ProfileForm } from './profile-form';
+import { TaxRulesForm } from './tax-rules-form';
 
 @Component({
   selector: 'app-settings-dialog',
@@ -17,6 +18,7 @@ import { ProfileForm } from './profile-form';
     MatButtonToggleModule,
     MatIconModule,
     ProfileForm,
+    TaxRulesForm,
   ],
   template: `
     <div class="head">
@@ -31,6 +33,11 @@ import { ProfileForm } from './profile-form';
         <mat-tab label="Profile">
           <div class="pane">
             <app-profile-form />
+          </div>
+        </mat-tab>
+        <mat-tab label="Tax rules">
+          <div class="pane">
+            <app-tax-rules-form />
           </div>
         </mat-tab>
         <mat-tab label="Preferences">

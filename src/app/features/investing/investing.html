@@ -1,0 +1,51 @@
+<div class="app-page">
+  <app-page-header
+    title="Investing"
+    subtitle="Declare your monthly long-term contributions — EPF, NPS, mutual funds"
+    icon="trending_up"
+  />
+
+  <div class="stat-row" style="margin-bottom: 1.25rem">
+    <app-stat-tile
+      label="Total investments"
+      [value]="derived().totalInvestments | currency: 'INR' : 'symbol' : '1.0-0'"
+      hint="per month"
+      icon="trending_up"
+      data-testid="investing-total-tile"
+    />
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 1.25rem">
+  <app-section-card
+    title="Mandatory"
+    eyebrow="Owned here · monthly · → Living"
+    icon="lock"
+    subtitle="Statutory retirement contributions (EPF, NPS). Counted under Living. EPF defaults to ₹1,850."
+  >
+    <app-line-item-list
+      [ops]="mandatory"
+      typeLabel="Instrument"
+      valueLabel="Amount / month"
+      addLabel="Add mandatory"
+      emptyText="No mandatory contributions."
+      testid="invest-mandatory"
+    />
+  </app-section-card>
+
+  <app-section-card
+    title="Voluntary"
+    eyebrow="Owned here · monthly · → Growth & Freedom"
+    icon="rocket_launch"
+    subtitle="Extra investments you choose — mutual funds, stocks, PPF. Counted under Growth & Freedom."
+  >
+    <app-line-item-list
+      [ops]="voluntary"
+      typeLabel="Instrument"
+      valueLabel="Amount / month"
+      addLabel="Add voluntary"
+      emptyText="No voluntary investments yet."
+      testid="invest-voluntary"
+    />
+  </app-section-card>
+  </div>
+</div>

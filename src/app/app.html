@@ -1,24 +1,67 @@
-<mat-toolbar class="app-toolbar">
+<header class="topbar">
+  @if (isHandset()) {
+    <button
+      class="icon-btn"
+      type="button"
+      (click)="toggleSidebar()"
+      aria-label="Open navigation"
+      data-testid="nav-open-mobile"
+    >
+      <mat-icon>menu</mat-icon>
+    </button>
+  }
+
+  <a class="brand" routerLink="/dashboard" aria-label="Personal Finance — home">
+    <span class="brand__mark" aria-hidden="true">
+      <svg viewBox="0 0 64 64" width="34" height="34">
+        <defs>
+          <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#6366f1" />
+            <stop offset="1" stop-color="#22d3ee" />
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="15" fill="url(#brandGrad)" />
+        <g fill="#ffffff">
+          <rect x="15" y="37" width="7.2" height="12" rx="3.2" />
+          <rect x="28.4" y="28" width="7.2" height="21" rx="3.2" />
+          <rect x="41.8" y="19" width="7.2" height="30" rx="3.2" />
+        </g>
+        <path
+          d="M18 31 L32 24 L45.4 15.5"
+          fill="none"
+          stroke="#ffffff"
+          stroke-width="3.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          opacity="0.92"
+        />
+        <circle cx="45.4" cy="15.5" r="5.4" fill="#ffffff" />
+        <circle cx="45.4" cy="15.5" r="2.5" fill="#6366f1" />
+      </svg>
+    </span>
+    <span class="brand__name">Personal <span class="gradient-text">Finance</span></span>
+  </a>
+
+  <span class="topbar__spacer"></span>
+
   <button
-    mat-icon-button
-    (click)="toggleSidebar()"
-    aria-label="Toggle navigation"
-    data-testid="nav-toggle"
+    class="topbar__export"
+    type="button"
+    [disabled]="exporting()"
+    (click)="exportWorkbook()"
+    matTooltip="Export the whole model to Excel"
+    data-testid="dashboard-export"
   >
-    <mat-icon>menu</mat-icon>
+    <mat-icon>download</mat-icon>
+    <span class="topbar__export-label">{{ exporting() ? 'Exporting…' : 'Export' }}</span>
   </button>
-  <span class="app-toolbar__brand">
-    <span class="app-toolbar__logo" aria-hidden="true"><mat-icon>account_balance</mat-icon></span>
-    <span class="app-toolbar__name">Personal Finance</span>
-  </span>
-
-  <span class="app-toolbar__spacer"></span>
 
   <button
-    mat-icon-button
+    class="icon-btn"
+    type="button"
     (click)="cycleTheme()"
     [matTooltip]="'Theme: ' + theme()"
-    aria-label="Toggle theme"
+    aria-label="Switch theme"
     data-testid="theme-cycle"
   >
     <mat-icon>{{
@@ -27,34 +70,16 @@
   </button>
 
   <button
-    class="app-avatar"
-    mat-icon-button
-    [matMenuTriggerFor]="profileMenu"
-    aria-label="Open profile menu"
-    data-testid="avatar-menu"
+    class="icon-btn"
+    type="button"
+    (click)="openSettings()"
+    matTooltip="Settings"
+    aria-label="Open settings"
+    data-testid="settings-gear"
   >
-    @if (profile.photoUrl(); as url) {
-      <img [src]="url" alt="Profile" class="app-avatar__img" />
-    } @else {
-      <span class="app-avatar__initials">{{ profile.initials() }}</span>
-    }
+    <mat-icon>settings</mat-icon>
   </button>
-
-  <mat-menu #profileMenu="matMenu">
-    <div class="menu-head">
-      <span class="menu-head__name">{{ profile.displayName() || 'Your profile' }}</span>
-      <span class="menu-head__hint">Saved on this device</span>
-    </div>
-    <button mat-menu-item (click)="openSettings()" data-testid="open-settings">
-      <mat-icon>manage_accounts</mat-icon>
-      <span>Profile &amp; settings</span>
-    </button>
-    <button mat-menu-item (click)="cycleTheme()">
-      <mat-icon>contrast</mat-icon>
-      <span>Theme: {{ theme() }}</span>
-    </button>
-  </mat-menu>
-</mat-toolbar>
+</header>
 
 <mat-sidenav-container class="app-shell">
   <mat-sidenav
@@ -64,28 +89,82 @@
     [opened]="isHandset() ? mobileOpen() : true"
     (openedChange)="mobileOpen.set($event)"
   >
-    <mat-nav-list>
-      @for (pillar of pillars; track pillar.path) {
-        <a
-          mat-list-item
-          [routerLink]="['/', pillar.path]"
-          routerLinkActive
-          #rla="routerLinkActive"
-          [activated]="rla.isActive"
-          (click)="closeOnHandset()"
-          [matTooltip]="pillar.title"
+    <div class="sidenav-inner">
+      <nav class="nav">
+        @for (pillar of pillars; track pillar.path) {
+          <a
+            class="nav__item"
+            [routerLink]="['/', pillar.path]"
+            routerLinkActive="nav__item--active"
+            [routerLinkActiveOptions]="{ exact: pillar.path === 'dashboard' }"
+            (click)="closeOnHandset()"
+            [matTooltip]="pillar.title"
+            [matTooltipDisabled]="!collapsed() || isHandset()"
+            matTooltipPosition="right"
+            [attr.data-testid]="'nav-' + pillar.path"
+          >
+            <mat-icon class="nav__icon" aria-hidden="true">{{ pillar.icon }}</mat-icon>
+            <span class="nav__label">{{ pillar.title }}</span>
+            @if (pillar.status === 'soon') {
+              <span class="nav__soon">Soon</span>
+            }
+          </a>
+        }
+      </nav>
+
+      <div class="nav-foot">
+        <!-- Profile (Drupal-style user account at the bottom) -->
+        <button
+          class="nav__item nav__profile"
+          type="button"
+          [matMenuTriggerFor]="profileMenu"
+          [matTooltip]="profile.displayName() || 'Your profile'"
           [matTooltipDisabled]="!collapsed() || isHandset()"
           matTooltipPosition="right"
-          [attr.data-testid]="'nav-' + pillar.path"
+          aria-label="Open profile menu"
+          data-testid="avatar-menu"
         >
-          <mat-icon matListItemIcon>{{ pillar.icon }}</mat-icon>
-          <span matListItemTitle class="app-sidenav__label">{{ pillar.title }}</span>
-          @if (pillar.status === 'soon') {
-            <span matListItemMeta class="app-sidenav__soon">Soon</span>
-          }
-        </a>
-      }
-    </mat-nav-list>
+          <span class="nav__avatar" aria-hidden="true">
+            @if (profile.photoUrl(); as url) {
+              <img [src]="url" alt="" class="nav__avatar-img" />
+            } @else {
+              <span class="nav__avatar-initials">{{ profile.initials() }}</span>
+            }
+          </span>
+          <span class="nav__label">{{ profile.displayName() || 'Your profile' }}</span>
+        </button>
+
+        <!-- Collapse toggle: icon-only chevron (self-explanatory, Drupal-style) -->
+        @if (!isHandset()) {
+          <button
+            class="nav-collapse"
+            [class.nav-collapse--collapsed]="collapsed()"
+            type="button"
+            (click)="toggleSidebar()"
+            [matTooltip]="collapsed() ? 'Expand' : 'Collapse'"
+            [attr.aria-label]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
+            data-testid="nav-toggle"
+          >
+            <mat-icon class="nav-collapse__chevron" aria-hidden="true">chevron_left</mat-icon>
+          </button>
+        }
+      </div>
+    </div>
+
+    <mat-menu #profileMenu="matMenu">
+      <div class="menu-head">
+        <span class="menu-head__name">{{ profile.displayName() || 'Your profile' }}</span>
+        <span class="menu-head__hint">Saved on this device</span>
+      </div>
+      <button mat-menu-item (click)="openSettings()" data-testid="open-settings">
+        <mat-icon>manage_accounts</mat-icon>
+        <span>Profile &amp; settings</span>
+      </button>
+      <button mat-menu-item (click)="cycleTheme()">
+        <mat-icon>contrast</mat-icon>
+        <span>Theme: {{ theme() }}</span>
+      </button>
+    </mat-menu>
   </mat-sidenav>
 
   <mat-sidenav-content class="app-content">

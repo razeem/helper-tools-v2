@@ -32,13 +32,17 @@ export class PreferencesStore {
   readonly theme = computed(() => this.value().theme);
 
   constructor() {
-    // Reflect the chosen theme onto the document root whenever it changes.
+    // Reflect the chosen theme onto the document root. `data-theme` drives the
+    // bio design-token overrides in styles.scss; removing it (system mode) lets
+    // the `prefers-color-scheme` media query decide.
     effect(() => {
       const theme = this.theme();
       const root = document.documentElement;
       if (theme === 'system') {
+        root.removeAttribute('data-theme');
         root.style.removeProperty('color-scheme');
       } else {
+        root.setAttribute('data-theme', theme);
         root.style.colorScheme = theme;
       }
     });
