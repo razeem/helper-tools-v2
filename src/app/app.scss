@@ -1,0 +1,36 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 0.5rem;
+
+  &__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+}
+
+.app-shell {
+  flex: 1 1 auto;
+  background: var(--mat-sys-surface);
+}
+
+.app-sidenav {
+  width: 264px;
+  border-right: 1px solid var(--mat-sys-outline-variant);
+  padding-top: 0.5rem;
+}
+
+.app-content {
+  display: block;
+  min-height: 100%;
+}

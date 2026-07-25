@@ -1,6 +1,7 @@
-# See http://help.github.com/ignore-files/ for more about ignoring files.
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
+/dist
 /tmp
 /out-tsc
 /bazel-out
@@ -25,7 +26,14 @@ yarn-error.log
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/mcp.json
 .history/*
+
+# Playwright
+/test-results
+/playwright-report
+/playwright/.cache
+/blob-report
 
 # Miscellaneous
 /.angular/cache
@@ -35,6 +43,7 @@ yarn-error.log
 /libpeerconnection.log
 testem.log
 /typings
+__screenshots__/
 
 # System files
 .DS_Store

@@ -1,0 +1,44 @@
+<mat-toolbar class="app-toolbar" color="primary">
+  <button
+    mat-icon-button
+    (click)="toggleNav()"
+    aria-label="Toggle navigation"
+    data-testid="nav-toggle"
+  >
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span class="app-toolbar__brand">
+    <mat-icon>construction</mat-icon>
+    <span>Helper Tools</span>
+  </span>
+</mat-toolbar>
+
+<mat-sidenav-container class="app-shell">
+  <mat-sidenav
+    class="app-sidenav"
+    [mode]="isHandset() ? 'over' : 'side'"
+    [opened]="navOpen()"
+    (openedChange)="navOpen.set($event)"
+  >
+    <mat-nav-list>
+      @for (tool of tools; track tool.path) {
+        <a
+          mat-list-item
+          [routerLink]="['/', tool.path]"
+          routerLinkActive
+          #rla="routerLinkActive"
+          [activated]="rla.isActive"
+          (click)="closeOnHandset()"
+          [attr.data-testid]="'nav-' + tool.path"
+        >
+          <mat-icon matListItemIcon>{{ tool.icon }}</mat-icon>
+          <span matListItemTitle>{{ tool.title }}</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="app-content">
+    <router-outlet />
+  </mat-sidenav-content>
+</mat-sidenav-container>

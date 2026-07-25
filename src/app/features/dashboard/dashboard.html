@@ -1,0 +1,27 @@
+<div class="page">
+  <app-page-header
+    title="Helper Tools"
+    subtitle="A small suite of self-contained utilities. Everything you enter stays on this device."
+    icon="dashboard"
+  />
+
+  <div class="tool-grid">
+    @for (tool of tools; track tool.path) {
+      <a
+        class="tool-card app-section"
+        [routerLink]="['/', tool.path]"
+        [attr.data-testid]="'card-' + tool.path"
+      >
+        <span class="tool-card__icon" aria-hidden="true">
+          <mat-icon>{{ tool.icon }}</mat-icon>
+        </span>
+        <span class="tool-card__title">{{ tool.title }}</span>
+        <span class="tool-card__desc">{{ tool.description }}</span>
+        <span class="tool-card__cta">
+          Open
+          <mat-icon>arrow_forward</mat-icon>
+        </span>
+      </a>
+    }
+  </div>
+</div>
