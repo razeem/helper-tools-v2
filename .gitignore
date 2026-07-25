@@ -45,6 +45,9 @@ testem.log
 /typings
 __screenshots__/
 
+# Claude Code (local, per-machine settings)
+.claude/
+
 # System files
 .DS_Store
 Thumbs.db
