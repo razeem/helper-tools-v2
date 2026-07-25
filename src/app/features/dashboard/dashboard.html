@@ -1,27 +1,79 @@
-<div class="page">
+<div class="app-page">
   <app-page-header
-    title="Helper Tools"
-    subtitle="A small suite of self-contained utilities. Everything you enter stays on this device."
+    title="Dashboard"
+    subtitle="Everything you enter across the pillars, connected in one picture."
     icon="dashboard"
   />
 
-  <div class="tool-grid">
-    @for (tool of tools; track tool.path) {
-      <a
-        class="tool-card app-section"
-        [routerLink]="['/', tool.path]"
-        [attr.data-testid]="'card-' + tool.path"
-      >
-        <span class="tool-card__icon" aria-hidden="true">
-          <mat-icon>{{ tool.icon }}</mat-icon>
-        </span>
-        <span class="tool-card__title">{{ tool.title }}</span>
-        <span class="tool-card__desc">{{ tool.description }}</span>
-        <span class="tool-card__cta">
-          Open
-          <mat-icon>arrow_forward</mat-icon>
-        </span>
-      </a>
+  <div class="stat-row">
+    <app-stat-tile
+      label="Gross income"
+      [value]="derived().gross | currency: 'INR' : 'symbol' : '1.0-0'"
+      icon="payments"
+    />
+    <app-stat-tile
+      label="Tax payable"
+      [value]="derived().taxPayable | currency: 'INR' : 'symbol' : '1.0-0'"
+      icon="receipt_long"
+    />
+    <app-stat-tile
+      label="Net income"
+      [value]="derived().netIncome | currency: 'INR' : 'symbol' : '1.0-0'"
+      icon="savings"
+    />
+    <app-stat-tile
+      label="Surplus vs minimum"
+      [value]="derived().surplus | currency: 'INR' : 'symbol' : '1.0-0'"
+      [tone]="derived().surplus >= 0 ? 'positive' : 'negative'"
+      icon="trending_up"
+      data-testid="dashboard-surplus"
+    />
+  </div>
+
+  <app-section-card
+    title="Where your income goes"
+    eyebrow="Allocation"
+    icon="donut_large"
+    subtitle="Segments are sized against your gross income."
+  >
+    @if (allocation().segments.length > 0) {
+      <div class="bar" role="img" aria-label="Income allocation">
+        @for (seg of allocation().segments; track seg.label) {
+          <span
+            class="bar__seg"
+            [style.width]="segmentWidth(seg.value)"
+            [style.background]="seg.color"
+            [title]="seg.label"
+          ></span>
+        }
+      </div>
+      <ul class="legend">
+        @for (seg of allocation().segments; track seg.label) {
+          <li class="legend__item">
+            <span class="legend__dot" [style.background]="seg.color"></span>
+            {{ seg.label }}
+            <span class="legend__val app-num">{{
+              seg.value | currency: 'INR' : 'symbol' : '1.0-0'
+            }}</span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="empty">Add your income and spending to see the allocation.</p>
+    }
+  </app-section-card>
+
+  <h2 class="section-title">Pillars</h2>
+  <div class="pillar-grid">
+    @for (pillar of pillars; track pillar.path) {
+      <app-pillar-card
+        [path]="pillar.path"
+        [title]="pillar.title"
+        [icon]="pillar.icon"
+        [description]="pillar.description"
+        [value]="pillarValue(pillar.path)"
+        [soon]="pillar.status === 'soon'"
+      />
     }
   </div>
 </div>

@@ -1,0 +1,56 @@
+<div class="app-page">
+  <app-page-header
+    title="Spending"
+    subtitle="Needs and Wants feed your Minimum Income automatically"
+    icon="shopping_cart"
+  />
+
+  <div class="stat-row">
+    <app-stat-tile
+      label="Total needs"
+      [value]="derived().totalNeeds | currency: 'INR' : 'symbol' : '1.0-0'"
+      icon="check_circle"
+      data-testid="spending-total-needs"
+    />
+    <app-stat-tile
+      label="Total wants"
+      [value]="derived().totalWants | currency: 'INR' : 'symbol' : '1.0-0'"
+      icon="redeem"
+      data-testid="spending-total-wants"
+    />
+  </div>
+
+  <div class="lists">
+    <app-section-card
+      title="Needs"
+      eyebrow="Must-have"
+      icon="check_circle"
+      subtitle="Must-have expenses that keep life running — rent, food, utilities."
+    >
+      <app-line-item-list
+        [ops]="needs"
+        typeLabel="Expense"
+        valueLabel="Monthly / yearly"
+        addLabel="Add need"
+        emptyText="No needs added yet."
+        testid="need"
+      />
+    </app-section-card>
+
+    <app-section-card
+      title="Wants"
+      eyebrow="Nice-to-have"
+      icon="redeem"
+      subtitle="Lifestyle spending you could live without if needed."
+    >
+      <app-line-item-list
+        [ops]="wants"
+        typeLabel="Expense"
+        valueLabel="Monthly / yearly"
+        addLabel="Add want"
+        emptyText="No wants added yet."
+        testid="want"
+      />
+    </app-section-card>
+  </div>
+</div>

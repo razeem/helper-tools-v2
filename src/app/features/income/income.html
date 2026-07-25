@@ -1,0 +1,286 @@
+<div class="app-page">
+  <app-page-header
+    title="Income"
+    subtitle="Set your income once — every other pillar reads it from here"
+    icon="payments"
+  />
+
+  <mat-tab-group animationDuration="200ms">
+    <!-- Minimum Income -->
+    <mat-tab label="Minimum Income">
+      <div class="tab">
+        <app-section-card
+          title="Your income"
+          eyebrow="Owned here"
+          icon="account_balance_wallet"
+          subtitle="Gross Income drives tax and net income across the app."
+        >
+          <div class="fields">
+            <mat-form-field appearance="outline">
+              <mat-label>Gross annual income</mat-label>
+              <span matTextPrefix>₹&nbsp;</span>
+              <input
+                matInput
+                type="number"
+                min="0"
+                inputmode="numeric"
+                [ngModel]="inputs().income.gross"
+                (ngModelChange)="setGross($event)"
+                data-testid="income-gross"
+              />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Short-term savings target</mat-label>
+              <span matTextPrefix>₹&nbsp;</span>
+              <input
+                matInput
+                type="number"
+                min="0"
+                inputmode="numeric"
+                [ngModel]="inputs().income.shortTermSavings"
+                (ngModelChange)="setShortTermSavings($event)"
+                data-testid="income-short-term-savings"
+              />
+            </mat-form-field>
+          </div>
+        </app-section-card>
+
+        <div class="stat-row">
+          <app-stat-tile
+            label="Net income"
+            [value]="derived().netIncome | currency: 'INR' : 'symbol' : '1.0-0'"
+            hint="Gross − tax"
+            icon="savings"
+          />
+          <app-stat-tile
+            label="Minimum income"
+            [value]="derived().minimumIncome | currency: 'INR' : 'symbol' : '1.0-0'"
+            data-testid="income-minimum"
+          />
+          <app-stat-tile
+            label="Surplus vs minimum"
+            [value]="derived().surplus | currency: 'INR' : 'symbol' : '1.0-0'"
+            [tone]="derived().surplus >= 0 ? 'positive' : 'negative'"
+            data-testid="income-surplus"
+          />
+        </div>
+
+        @if (derived().totalNeeds === 0 && derived().totalWants === 0) {
+          <app-inline-prompt
+            message="Add your Needs and Wants in Spending to compute your minimum income."
+            link="/spending"
+            linkLabel="Go to Spending"
+          />
+        }
+
+        <app-section-card title="Minimum income breakdown" icon="functions">
+          <ul class="breakdown">
+            @for (row of minIncomeRows(); track row.label) {
+              <li class="breakdown__row">
+                <span class="breakdown__label">
+                  {{ row.label }}
+                  @if (row.link && row.amount === 0) {
+                    <a class="breakdown__link" [routerLink]="row.link">add</a>
+                  }
+                </span>
+                <span class="breakdown__amount app-num">
+                  {{ row.amount | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </span>
+              </li>
+            }
+            <li class="breakdown__row breakdown__row--total">
+              <span class="breakdown__label">Minimum income</span>
+              <span class="breakdown__amount app-num">
+                {{ derived().minimumIncome | currency: 'INR' : 'symbol' : '1.0-0' }}
+              </span>
+            </li>
+          </ul>
+        </app-section-card>
+      </div>
+    </mat-tab>
+
+    <!-- Goals -->
+    <mat-tab label="Goals">
+      <div class="tab goals">
+        <app-section-card title="Must have" eyebrow="Non-negotiable" icon="flag">
+          <div class="goal-list">
+            @for (goal of mustHave.items(); track goal.id) {
+              <div class="goal-row">
+                <mat-form-field appearance="outline">
+                  <input
+                    matInput
+                    [ngModel]="goal.text"
+                    (ngModelChange)="mustHave.update(goal.id, { text: $event })"
+                    placeholder="Goal"
+                    data-testid="goal-must-have"
+                  />
+                </mat-form-field>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Remove goal"
+                  (click)="mustHave.remove(goal.id)"
+                >
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            }
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="addMustHave()"
+              data-testid="add-must-have"
+            >
+              <mat-icon>add</mat-icon>
+              Add goal
+            </button>
+          </div>
+        </app-section-card>
+
+        <app-section-card title="Good to have" eyebrow="Aspirational" icon="star">
+          <div class="goal-list">
+            @for (goal of goodToHave.items(); track goal.id) {
+              <div class="goal-row">
+                <mat-form-field appearance="outline">
+                  <input
+                    matInput
+                    [ngModel]="goal.text"
+                    (ngModelChange)="goodToHave.update(goal.id, { text: $event })"
+                    placeholder="Goal"
+                    data-testid="goal-good-to-have"
+                  />
+                </mat-form-field>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Remove goal"
+                  (click)="goodToHave.remove(goal.id)"
+                >
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            }
+            <button mat-stroked-button type="button" (click)="addGoodToHave()">
+              <mat-icon>add</mat-icon>
+              Add goal
+            </button>
+          </div>
+        </app-section-card>
+      </div>
+    </mat-tab>
+
+    <!-- ICER Idea Generator -->
+    <mat-tab label="Idea Generator">
+      <div class="tab">
+        <app-section-card
+          title="Income ideas"
+          eyebrow="ICER rating"
+          icon="lightbulb"
+          subtitle="Rate each idea 1–5 on Interest, Capability, Effortlessness and Return. Sort to find your best bets."
+        >
+          <div actions>
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              (click)="addIdea()"
+              data-testid="add-idea"
+            >
+              <mat-icon>add</mat-icon>
+              Add idea
+            </button>
+          </div>
+
+          <div class="table-scroll">
+            <table class="icer" data-testid="icer-table">
+              <thead>
+                <tr>
+                  <th class="icer__name" (click)="toggleSort('name')">
+                    Idea
+                    <mat-icon>{{
+                      sortKey() === 'name'
+                        ? sortDir() === 'asc'
+                          ? 'arrow_upward'
+                          : 'arrow_downward'
+                        : 'unfold_more'
+                    }}</mat-icon>
+                  </th>
+                  @for (axis of icerAxes; track axis.key) {
+                    <th (click)="toggleSort(axis.key)" [title]="axis.help">
+                      {{ axis.label }}
+                      <mat-icon>{{
+                        sortKey() === axis.key
+                          ? sortDir() === 'asc'
+                            ? 'arrow_upward'
+                            : 'arrow_downward'
+                          : 'unfold_more'
+                      }}</mat-icon>
+                    </th>
+                  }
+                  <th
+                    class="icer__score"
+                    (click)="toggleSort('score')"
+                    data-testid="icer-sort-score"
+                  >
+                    Score
+                    <mat-icon>{{
+                      sortKey() === 'score'
+                        ? sortDir() === 'asc'
+                          ? 'arrow_upward'
+                          : 'arrow_downward'
+                        : 'unfold_more'
+                    }}</mat-icon>
+                  </th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (idea of sortedIdeas(); track idea.id) {
+                  <tr data-testid="icer-row">
+                    <td class="icer__name">
+                      <mat-form-field appearance="outline" class="dense">
+                        <input
+                          matInput
+                          [ngModel]="idea.name"
+                          (ngModelChange)="setIdeaName(idea.id, $event)"
+                          placeholder="Idea name"
+                          data-testid="icer-name"
+                        />
+                      </mat-form-field>
+                    </td>
+                    @for (axis of icerAxes; track axis.key) {
+                      <td>
+                        <app-rating-input
+                          [value]="idea[axis.key]"
+                          [label]="axis.label"
+                          (valueChange)="setIdeaAxis(idea.id, axis.key, $event)"
+                        />
+                      </td>
+                    }
+                    <td class="icer__score app-num" data-testid="icer-score">
+                      {{ score(idea) | number: '1.2-2' }}
+                    </td>
+                    <td>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        aria-label="Remove idea"
+                        (click)="ideas.remove(idea.id)"
+                      >
+                        <mat-icon>delete_outline</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="icer__empty">No ideas yet — add your first one.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-section-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

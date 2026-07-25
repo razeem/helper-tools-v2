@@ -1,0 +1,74 @@
+.profile {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.profile__photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--mat-sys-surface-container-high);
+  border: 1px solid var(--mat-sys-outline-variant);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &--empty mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--mat-sys-outline);
+  }
+}
+
+.profile__photo-actions {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.profile__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.15rem 1rem;
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.profile__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (max-width: 560px) {
+  .fields-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

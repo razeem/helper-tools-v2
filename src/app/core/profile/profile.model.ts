@@ -31,7 +31,7 @@ export const DEFAULT_PROFILE: ProfileData = {
 export type ProfileTextFields = Omit<ProfileData, 'photo'>;
 
 export function profileTextFields(data: ProfileData): ProfileTextFields {
-  const text: ProfileTextFields = {
+  return {
     name: data.name,
     email: data.email,
     phone: data.phone,
@@ -43,5 +43,17 @@ export function profileTextFields(data: ProfileData): ProfileTextFields {
     country: data.country,
     notes: data.notes,
   };
-  return text;
+}
+
+/** Up-to-two-letter initials from name (fallback to email, then '?'). */
+export function profileInitials(data: ProfileData): string {
+  const source = data.name.trim() || data.email.trim();
+  if (!source) {
+    return '?';
+  }
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return source.slice(0, 2).toUpperCase();
 }

@@ -6,9 +6,14 @@ import { map } from 'rxjs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
-import { MatIconModule } from '@angular/material/icon';
+import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { TOOLS } from './app.routes';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
+import { PILLARS } from './app.routes';
+import { PreferencesStore } from './core/preferences/preferences-store';
+import { ProfileStore } from './core/profile/profile-store';
 
 @Component({
   selector: 'app-root',
@@ -22,32 +27,58 @@ import { TOOLS } from './app.routes';
     MatListModule,
     MatIconModule,
     MatButtonModule,
+    MatMenuModule,
+    MatTooltipModule,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
   private readonly breakpoints = inject(BreakpointObserver);
+  private readonly prefs = inject(PreferencesStore);
+  private readonly dialog = inject(MatDialog);
 
-  protected readonly tools = TOOLS;
+  protected readonly profile = inject(ProfileStore);
+  protected readonly pillars = PILLARS;
+  protected readonly collapsed = this.prefs.sidebarCollapsed;
+  protected readonly theme = this.prefs.theme;
 
-  /** Collapse the sidenav to an overlay on handset/tablet widths. */
+  /** On handset/tablet the sidenav is an overlay controlled by `mobileOpen`. */
   protected readonly isHandset = toSignal(
     this.breakpoints
       .observe([Breakpoints.Handset, Breakpoints.TabletPortrait])
       .pipe(map((result) => result.matches)),
     { initialValue: false },
   );
+  protected readonly mobileOpen = signal(false);
 
-  protected readonly navOpen = signal(true);
+  constructor() {
+    inject(MatIconRegistry).setDefaultFontSetClass('material-symbols-rounded');
+  }
 
-  protected toggleNav(): void {
-    this.navOpen.update((open) => !open);
+  protected toggleSidebar(): void {
+    if (this.isHandset()) {
+      this.mobileOpen.update((open) => !open);
+    } else {
+      this.prefs.toggleSidebar();
+    }
   }
 
   protected closeOnHandset(): void {
     if (this.isHandset()) {
-      this.navOpen.set(false);
+      this.mobileOpen.set(false);
     }
+  }
+
+  protected cycleTheme(): void {
+    const order = ['system', 'light', 'dark'] as const;
+    const next = order[(order.indexOf(this.theme()) + 1) % order.length];
+    this.prefs.setTheme(next);
+  }
+
+  protected async openSettings(): Promise<void> {
+    // Lazy-load the settings dialog (and its exceljs/forms deps) on demand.
+    const { SettingsDialog } = await import('./features/settings/settings-dialog');
+    this.dialog.open(SettingsDialog, { autoFocus: false, restoreFocus: false });
   }
 }

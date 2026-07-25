@@ -1,7 +1,9 @@
-# Helper Tools
+# Personal Finance
 
-A small suite of self-contained browser utilities (income-tax calculator, profile store, …).
-Everything you enter is persisted locally in **IndexedDB** — no backend, no accounts.
+A personal-finance dashboard built around **seven pillars** — Income, Spending, Saving, Loan,
+Insurance, Investing and Tax — that share **one reactive model**: every value is entered once, in
+the pillar that owns it, and computed everywhere else. Everything is persisted locally in
+**IndexedDB** — no backend, no accounts.
 
 Built with **Angular 22** (standalone, zoneless, signals), **Angular Material 3**, and **Tailwind CSS v4**.
 
@@ -27,10 +29,14 @@ Built with **Angular 22** (standalone, zoneless, signals), **Angular Material 3*
 
 ## Features
 
-- **Dashboard** — entry point linking to each tool.
-- **Income Tax Calculator** — Indian old-regime estimate (slabs, 80C/80D deductions, cess). Pure, unit-tested calculation. Inputs persist automatically.
-- **Profile** — name, photo, address, phone, email, notes. Typed reactive form that auto-saves and auto-loads; the photo is compressed to WebP via `<canvas>` and stored as a `Blob`.
-- **Excel export** — any tool can export its data to a real `.xlsx` (offline, via exceljs).
+- **Dashboard** — the aggregate picture: gross/net/tax/surplus, an allocation bar, and pillar cards.
+- **Income** — Minimum Income calculator (owns your Gross Income), Goals (must-have / good-to-have), and an ICER income-idea generator (rate ideas 1–5 on Interest, Capability, Effortlessness, Return; sortable).
+- **Spending** — repeatable Needs and Wants lists that feed the shared model.
+- **Tax** — Indian income-tax calculator (old & new regime) reading your shared Gross Income, plus a side-by-side **Regime Comparer**. Pure, unit-tested calculations.
+- **Saving · Loan · Insurance · Investing** — routed placeholders (*Coming soon*), already wired into the model.
+- **Shared model** — enter a value once; every dependent figure recomputes reactively across pillars.
+- **Profile & settings** — top-right avatar → dialog with a profile form (photo compressed to WebP `<canvas>` → `Blob`) and theme preferences.
+- **Excel export** — export tax and profile data to a real `.xlsx` (offline, via exceljs).
 
 ## Architecture & conventions
 

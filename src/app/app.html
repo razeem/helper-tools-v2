@@ -1,38 +1,88 @@
-<mat-toolbar class="app-toolbar" color="primary">
+<mat-toolbar class="app-toolbar">
   <button
     mat-icon-button
-    (click)="toggleNav()"
+    (click)="toggleSidebar()"
     aria-label="Toggle navigation"
     data-testid="nav-toggle"
   >
     <mat-icon>menu</mat-icon>
   </button>
   <span class="app-toolbar__brand">
-    <mat-icon>construction</mat-icon>
-    <span>Helper Tools</span>
+    <span class="app-toolbar__logo" aria-hidden="true"><mat-icon>account_balance</mat-icon></span>
+    <span class="app-toolbar__name">Personal Finance</span>
   </span>
+
+  <span class="app-toolbar__spacer"></span>
+
+  <button
+    mat-icon-button
+    (click)="cycleTheme()"
+    [matTooltip]="'Theme: ' + theme()"
+    aria-label="Toggle theme"
+    data-testid="theme-cycle"
+  >
+    <mat-icon>{{
+      theme() === 'dark' ? 'dark_mode' : theme() === 'light' ? 'light_mode' : 'brightness_auto'
+    }}</mat-icon>
+  </button>
+
+  <button
+    class="app-avatar"
+    mat-icon-button
+    [matMenuTriggerFor]="profileMenu"
+    aria-label="Open profile menu"
+    data-testid="avatar-menu"
+  >
+    @if (profile.photoUrl(); as url) {
+      <img [src]="url" alt="Profile" class="app-avatar__img" />
+    } @else {
+      <span class="app-avatar__initials">{{ profile.initials() }}</span>
+    }
+  </button>
+
+  <mat-menu #profileMenu="matMenu">
+    <div class="menu-head">
+      <span class="menu-head__name">{{ profile.displayName() || 'Your profile' }}</span>
+      <span class="menu-head__hint">Saved on this device</span>
+    </div>
+    <button mat-menu-item (click)="openSettings()" data-testid="open-settings">
+      <mat-icon>manage_accounts</mat-icon>
+      <span>Profile &amp; settings</span>
+    </button>
+    <button mat-menu-item (click)="cycleTheme()">
+      <mat-icon>contrast</mat-icon>
+      <span>Theme: {{ theme() }}</span>
+    </button>
+  </mat-menu>
 </mat-toolbar>
 
 <mat-sidenav-container class="app-shell">
   <mat-sidenav
     class="app-sidenav"
+    [class.app-sidenav--rail]="collapsed() && !isHandset()"
     [mode]="isHandset() ? 'over' : 'side'"
-    [opened]="navOpen()"
-    (openedChange)="navOpen.set($event)"
+    [opened]="isHandset() ? mobileOpen() : true"
+    (openedChange)="mobileOpen.set($event)"
   >
     <mat-nav-list>
-      @for (tool of tools; track tool.path) {
+      @for (pillar of pillars; track pillar.path) {
         <a
           mat-list-item
-          [routerLink]="['/', tool.path]"
+          [routerLink]="['/', pillar.path]"
           routerLinkActive
           #rla="routerLinkActive"
           [activated]="rla.isActive"
           (click)="closeOnHandset()"
-          [attr.data-testid]="'nav-' + tool.path"
+          [matTooltip]="pillar.title"
+          [matTooltipDisabled]="!collapsed() || isHandset()"
+          matTooltipPosition="right"
+          [attr.data-testid]="'nav-' + pillar.path"
         >
-          <mat-icon matListItemIcon>{{ tool.icon }}</mat-icon>
-          <span matListItemTitle>{{ tool.title }}</span>
+          <mat-icon matListItemIcon>{{ pillar.icon }}</mat-icon>
+          <span matListItemTitle class="app-sidenav__label">{{ pillar.title }}</span>
+          @if (pillar.status === 'soon') {
+            <span matListItemMeta class="app-sidenav__soon">Soon</span>
+          }
         </a>
       }
     </mat-nav-list>

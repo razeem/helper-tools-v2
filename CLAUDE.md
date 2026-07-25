@@ -26,25 +26,31 @@ One-time repo setting: **Settings → Pages → Build and deployment → Source 
 
 ## Architecture
 
-Feature-first, every tool self-contained. All components are standalone; there are no NgModules.
+A personal-finance dashboard organised as **7 pillars**. Feature-first, standalone components, no NgModules.
 
 ```
 src/app/
-  app.config.ts          providers: zoneless CD, async animations, router (component input binding)
-  app.routes.ts          lazy loadComponent routes + TOOLS (single source for nav + router)
-  app.ts / .html / .scss shell: toolbar + responsive mat-sidenav + <router-outlet>
+  app.config.ts          providers: zoneless CD, async animations, router
+  app.routes.ts          PILLARS (single source for nav + router) + lazy loadComponent routes + redirects
+  app.ts / .html / .scss shell: toolbar (avatar menu + theme) + collapsible mat-sidenav + <router-outlet>
   core/
-    storage/  db.ts (idb schema + structural migrations), storage.service.ts (the persistence API)
-    export/   excel-export.service.ts (exceljs, dynamically imported)
-    image/    image-compression.ts (canvas → WebP Blob)
-  shared/ui/  page-header/ (reusable section header with a projected [actions] slot)
+    finance/   finance.model.ts (types + pure deriveFinance), tax.model.ts (old/new regime),
+               finance-store.ts (THE shared model — one binding, derived signals)
+    profile/   profile.model.ts, profile-store.ts (shared: form + shell avatar)
+    preferences/ preferences-store.ts (sidebar collapsed + theme)
+    storage/   db.ts (idb schema + structural migrations), storage.service.ts (persistence API)
+    export/    excel-export.service.ts (exceljs, dynamically imported)
+    image/     image-compression.ts (canvas → WebP Blob)
+  shared/ui/   stat-tile, section-card, pillar-card, coming-soon, line-item-list,
+               inline-prompt, rating-input, page-header
   features/
-    dashboard/   income-tax/   profile/
+    dashboard/  income/  spending/  tax/  settings/ (profile-form + settings-dialog)
+    coming-soon-page/  (saving · loan · insurance · investing route to this)
 ```
 
-- **Naming**: files use the Angular 22 convention with no `.component` suffix (`income-tax.ts`, class `IncomeTax`). Match it for new tools.
-- **Routing**: add a tool by appending to `TOOLS` in `app.routes.ts` (drives the sidenav) and a matching `loadComponent` route. Routes are lazy — each feature is its own chunk.
-- **State**: signals + `computed()`; `inject()` over constructor params; `ChangeDetectionStrategy.OnPush` everywhere (enforced by the schematic default in `angular.json`). Reactive forms are typed via `NonNullableFormBuilder`.
+- **Pillars**: `PILLARS` in `app.routes.ts` drives both the sidebar and routes. `status: 'soon'` pillars route to `ComingSoonPage` (title/icon from route `data`). Old links redirect: `/income-tax → /tax`, `/profile → /dashboard` (profile now lives in the avatar → settings dialog).
+- **Naming**: Angular 22 convention, no `.component` suffix (`income.ts`, class `Income`).
+- **State**: signals + `computed()`; `inject()`; `OnPush` everywhere; typed reactive forms via `NonNullableFormBuilder`. Icons are **Material Symbols Rounded** (set as the default mat-icon font in `App`).
 - **Styling**: Tailwind v4's entry lives in `src/tailwind.css` (`@import 'tailwindcss'`) — **kept separate from SCSS on purpose**, because Dart Sass cannot resolve that import; both files are in the `styles` array and processed by the builder's PostCSS pass (`.postcssrc.json` → `@tailwindcss/postcss`). Material's M3 theme is defined in `src/styles.scss` via `mat.theme(...)`, exposing `--mat-sys-*` tokens used throughout the SCSS. Tailwind v4 needs no `tailwind.config.js` (content is auto-detected).
 - **exceljs** is CommonJS and heavy (~950 kB); it is `await import()`-ed inside `ExcelExportService` so it only loads on first export and stays out of the initial bundle. It is allow-listed in `angular.json` (`allowedCommonJsDependencies`).
 
@@ -72,10 +78,11 @@ await this.store.flush();  // force pending write (call before export/tests)
 await this.store.reset();  // clear the stored document → defaults
 ```
 
-Wiring conventions used by the existing tools:
-- **Auto-load**: read `store.value()` in the template / a `computed()`. For reactive forms, seed the form **once** with an `effect` guarded on `store.ready()` that then `destroy()`s itself, patching with `{ emitEvent: false }` to avoid a write-back loop (see `features/profile/profile.ts`).
-- **Auto-save**: for signal inputs, call `store.patch(...)` on change (see `features/income-tax`). For reactive forms, subscribe to `valueChanges` → `store.patch(value)` with `takeUntilDestroyed()`.
+Wiring conventions used by the tools:
+- **Auto-load**: read `store.value()` in the template / a `computed()`. For reactive forms, seed the form **once** with an `effect` guarded on `store.ready()` that then `destroy()`s itself, patching with `{ emitEvent: false }` to avoid a write-back loop (see `features/settings/profile-form.ts`).
+- **Auto-save**: for signal inputs, call `store.patch(...)` on change. For reactive forms, subscribe to `valueChanges` → `store.patch(value)` with `takeUntilDestroyed()`.
 - **Blobs**: store `Blob`s directly in the state object (IndexedDB structured-clone handles them natively — no base64). The profile photo is compressed to WebP via `compressImage()` before being put in state.
+- **Domain stores**: rather than binding raw collections in components, the app wraps them in singleton stores — `FinanceStore`, `ProfileStore`, `PreferencesStore` — that expose `computed` derived state + typed setters. Components inject the store; they never call `StorageService` directly.
 
 ### Two-level versioning / migrations
 
@@ -84,9 +91,17 @@ Wiring conventions used by the existing tools:
 
 Every stored record is wrapped in a `StoredEnvelope` (`{ version, data, updatedAt }`) so the schema version always travels with the data.
 
-## Income tax calculator
+## Shared financial model (the core idea)
 
-`features/income-tax/income-tax.model.ts` holds a **pure** `calculateIncomeTax(input)` (old regime; slabs, standard/80C/80D deductions with caps, 4% cess). Its slab formula is clamped (`max(0, min(income, upper) - lower)`), which fixed a latent negative-slab bug in the original tool while producing identical results for valid inputs. Keep the calculation pure — the component and the unit tests both depend on that.
+`FinanceStore` (`core/finance/finance-store.ts`) is the **single shared state** for the whole app. Every value is entered **exactly once**, in the pillar that owns it; every other pillar reads derived numbers — nothing is re-typed.
+
+- **Ownership**: Income owns `gross`, `shortTermSavings`, goals, ideas; Spending owns `needs[]`/`wants[]`; Tax owns `regime` + deductions. Loan/Insurance/Investing own their lists too (modelled now, contribute 0 until those Coming-soon pillars ship).
+- **Derived** (`deriveFinance` in `finance.model.ts`, pure + unit-tested): `totalNeeds` (spending needs **+ loan EMIs**), `totalWants`, tax (`tax.model.ts`, old/new regime), `netIncome`, `minimumIncome`, `surplus`.
+- **Circular dependency** (Gross → Tax → Minimum): resolved by making **Gross the only entered value**; Tax and Minimum Income are both derived, and the dashboard compares Net vs Minimum. Never back-solve gross from minimum.
+- **Minimum Income formula** is implemented literally (`Needs + Wants + Savings + Insurance + Investments − Tax`) in one place in `deriveFinance` — adjust there if the definition changes.
+- **Inline prompts**: when a pillar needs a value another owns but it's still empty, render `app-inline-prompt` linking to the owning pillar instead of a duplicate input.
+
+Tax math lives in `core/finance/tax.model.ts` — pure `calculateOldRegimeTax` / `calculateNewRegimeTax` (clamped progressive slabs, caps, 4% cess, new-regime 87A rebate). New-regime slabs are representative current-India values; update them per FY in one place. Keep all of this pure — components and unit tests depend on it.
 
 ## Testing notes
 

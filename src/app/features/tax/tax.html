@@ -1,0 +1,211 @@
+<div class="app-page">
+  <app-page-header
+    title="Tax"
+    subtitle="Old regime · figures use your shared Gross Income"
+    icon="receipt_long"
+  >
+    <div actions class="flex gap-2">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="exporting()"
+        (click)="exportXlsx()"
+        data-testid="tax-export"
+      >
+        <mat-icon>download</mat-icon>
+        Export to Excel
+      </button>
+    </div>
+  </app-page-header>
+
+  <mat-tab-group animationDuration="200ms">
+    <!-- Calculator -->
+    <mat-tab label="Calculator">
+      <div class="tab">
+        @if (gross() === 0) {
+          <app-inline-prompt
+            message="Set your Gross Income in the Income pillar to calculate tax."
+            link="/income"
+            linkLabel="Go to Income"
+          />
+        }
+
+        <div class="stat-row">
+          <app-stat-tile
+            label="Gross income"
+            [value]="gross() | currency: 'INR' : 'symbol' : '1.0-0'"
+            icon="payments"
+          />
+          <app-stat-tile
+            label="Net taxable"
+            [value]="result().netTaxableIncome | currency: 'INR' : 'symbol' : '1.0-0'"
+          />
+          <app-stat-tile
+            label="Total tax payable"
+            [value]="result().totalTax | currency: 'INR' : 'symbol' : '1.0-0'"
+            tone="accent"
+            data-testid="tax-total-tile"
+          />
+        </div>
+
+        <app-section-card title="Regime & deductions" icon="tune" eyebrow="Owned here">
+          <div class="regime">
+            <span class="regime__label">Regime</span>
+            <mat-button-toggle-group
+              [value]="inputs().tax.regime"
+              (change)="setRegime($event.value)"
+              data-testid="tax-regime"
+            >
+              <mat-button-toggle value="old">Old</mat-button-toggle>
+              <mat-button-toggle value="new">New</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+
+          @if (inputs().tax.regime === 'old') {
+            <div class="fields">
+              @for (field of deductionFields; track field.key) {
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ field.label }}</mat-label>
+                  <span matTextPrefix>₹&nbsp;</span>
+                  <input
+                    matInput
+                    type="number"
+                    min="0"
+                    inputmode="numeric"
+                    [ngModel]="inputs().tax.deductions[field.key]"
+                    (ngModelChange)="setDeduction(field.key, $event)"
+                    [attr.data-testid]="'tax-' + field.key"
+                  />
+                  <mat-hint>{{ field.hint }}</mat-hint>
+                </mat-form-field>
+              }
+            </div>
+          } @else {
+            <p class="note">
+              The new regime uses only the standard deduction (₹75,000) and applies the section 87A
+              rebate up to ₹7,00,000 taxable income — other deductions don't apply.
+            </p>
+          }
+        </app-section-card>
+
+        <app-section-card title="Breakdown" icon="calculate">
+          <table mat-table [dataSource]="result().deductions" class="w-full mb">
+            <ng-container matColumnDef="label">
+              <th mat-header-cell *matHeaderCellDef>Deduction</th>
+              <td mat-cell *matCellDef="let row">{{ row.label }}</td>
+            </ng-container>
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef class="text-right">Amount</th>
+              <td mat-cell *matCellDef="let row" class="text-right">
+                {{ row.amount | currency: 'INR' : 'symbol' : '1.0-0' }}
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="deductionColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: deductionColumns"></tr>
+          </table>
+
+          <table mat-table [dataSource]="result().slabs" class="w-full">
+            <ng-container matColumnDef="range">
+              <th mat-header-cell *matHeaderCellDef>Range</th>
+              <td mat-cell *matCellDef="let s">
+                {{ s.minLimit | number }} –
+                {{ s.maxLimit === -1 ? '∞' : (s.maxLimit | number) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="percent">
+              <th mat-header-cell *matHeaderCellDef class="text-right">Rate</th>
+              <td mat-cell *matCellDef="let s" class="text-right">{{ s.percent }}%</td>
+            </ng-container>
+            <ng-container matColumnDef="taxable">
+              <th mat-header-cell *matHeaderCellDef class="text-right">Taxable</th>
+              <td mat-cell *matCellDef="let s" class="text-right">
+                {{ s.taxableInSlab | currency: 'INR' : 'symbol' : '1.0-0' }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="tax">
+              <th mat-header-cell *matHeaderCellDef class="text-right">Tax</th>
+              <td mat-cell *matCellDef="let s" class="text-right">
+                {{ s.tax | currency: 'INR' : 'symbol' : '1.0-0' }}
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="slabColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: slabColumns"></tr>
+          </table>
+
+          <p class="note">
+            @if (result().rebate > 0) {
+              Includes an 87A rebate of
+              {{ result().rebate | currency: 'INR' : 'symbol' : '1.0-0' }} and
+            }
+            4% health &amp; education cess of
+            {{ result().cess | currency: 'INR' : 'symbol' : '1.0-0' }}.
+          </p>
+        </app-section-card>
+      </div>
+    </mat-tab>
+
+    <!-- Regime comparer -->
+    <mat-tab label="Regime comparer">
+      <div class="tab">
+        @if (gross() === 0) {
+          <app-inline-prompt
+            message="Set your Gross Income in the Income pillar to compare regimes."
+            link="/income"
+            linkLabel="Go to Income"
+          />
+        }
+        <div class="compare">
+          <div class="compare__col" [class.compare__col--best]="comparison().better === 'old'">
+            <span class="app-eyebrow">Old regime</span>
+            <div class="compare__tax app-num" data-testid="compare-old">
+              {{ comparison().old.totalTax | currency: 'INR' : 'symbol' : '1.0-0' }}
+            </div>
+            <div class="compare__meta">
+              Net taxable
+              {{ comparison().old.netTaxableIncome | currency: 'INR' : 'symbol' : '1.0-0' }}
+            </div>
+            <div class="compare__meta">
+              Effective
+              {{ gross() ? (comparison().old.totalTax / gross() | percent: '1.1-1') : '—' }}
+            </div>
+            @if (comparison().better === 'old') {
+              <span class="compare__badge">Lower tax</span>
+            }
+          </div>
+
+          <div class="compare__col" [class.compare__col--best]="comparison().better === 'new'">
+            <span class="app-eyebrow">New regime</span>
+            <div class="compare__tax app-num" data-testid="compare-new">
+              {{ comparison().new.totalTax | currency: 'INR' : 'symbol' : '1.0-0' }}
+            </div>
+            <div class="compare__meta">
+              Net taxable
+              {{ comparison().new.netTaxableIncome | currency: 'INR' : 'symbol' : '1.0-0' }}
+            </div>
+            <div class="compare__meta">
+              Effective
+              {{ gross() ? (comparison().new.totalTax / gross() | percent: '1.1-1') : '—' }}
+            </div>
+            @if (comparison().better === 'new') {
+              <span class="compare__badge">Lower tax</span>
+            }
+          </div>
+        </div>
+
+        <p class="recommend" data-testid="compare-recommendation">
+          @if (gross() > 0) {
+            The <strong>{{ comparison().better === 'new' ? 'new' : 'old' }}</strong> regime saves
+            you
+            {{ comparison().saving | currency: 'INR' : 'symbol' : '1.0-0' }}
+            @if (comparison().better !== inputs().tax.regime) {
+              — switch on the Calculator tab to apply it.
+            }
+          } @else {
+            Enter your Gross Income to see which regime is better.
+          }
+        </p>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

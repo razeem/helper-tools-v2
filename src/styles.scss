@@ -21,6 +21,15 @@ html {
   --app-surface-container: var(--mat-sys-surface-container);
   --app-on-surface: var(--mat-sys-on-surface);
   --app-outline: var(--mat-sys-outline-variant);
+
+  // Design-system tokens (rounded, soft-elevation blue fintech).
+  --r-card: 20px;
+  --r-control: 12px;
+  --r-pill: 999px;
+  --app-elevation: 0 4px 16px rgb(20 40 90 / 6%);
+  --app-elevation-hover: 0 12px 28px rgb(20 40 90 / 12%);
+  --app-gap: 1.5rem;
+  --app-page-max: 1160px;
 }
 
 html,
@@ -39,5 +48,31 @@ body {
 .app-section {
   background: var(--mat-sys-surface-container-low);
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 16px;
+  border-radius: var(--r-card);
+}
+
+// Small uppercase tracked label (matches "EXAMPLES" / "INCOME" in the references).
+.app-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mat-sys-primary);
+}
+
+// Standard centered page wrapper used by every pillar.
+.app-page {
+  max-width: var(--app-page-max);
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem 3rem;
+}
+
+// Tabular numerals for any figure that lines up in columns/tiles.
+.app-num {
+  font-variant-numeric: tabular-nums;
+}
+
+// Render Material Symbols crisply at the sizes we use.
+.mat-icon {
+  font-variation-settings: 'opsz' 24;
 }
