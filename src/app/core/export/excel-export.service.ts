@@ -1,4 +1,21 @@
 import { Injectable } from '@angular/core';
+import type { Workbook } from 'exceljs';
+
+interface ExcelJsModule {
+  Workbook: new () => Workbook;
+}
+
+/**
+ * exceljs is CommonJS; depending on the bundler's interop its constructor is
+ * exposed either as a named export (dev) or under `.default` (prod/minified).
+ * Normalize both so `new Workbook()` works in every build.
+ */
+async function loadExcelJs(): Promise<ExcelJsModule> {
+  const mod = (await import('exceljs')) as unknown as ExcelJsModule & {
+    default?: ExcelJsModule;
+  };
+  return mod.default ?? mod;
+}
 
 export interface ExcelColumn {
   header: string;
@@ -23,7 +40,7 @@ const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.s
 @Injectable({ providedIn: 'root' })
 export class ExcelExportService {
   async export(fileName: string, sheets: ExcelSheet[]): Promise<Blob> {
-    const { Workbook } = await import('exceljs');
+    const { Workbook } = await loadExcelJs();
     const workbook = new Workbook();
     workbook.creator = 'Helper Tools';
     workbook.created = new Date();

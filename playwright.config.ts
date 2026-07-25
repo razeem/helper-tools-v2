@@ -22,10 +22,13 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+  // Run against the production build served statically (not `ng serve`) so the
+  // lazy exceljs export chunk is a real static file — deterministic downloads,
+  // no dev-server dependency-optimization reloads.
   webServer: {
-    command: `npm start -- --port ${PORT}`,
+    command: `npm run build && PORT=${PORT} node e2e/static-server.mjs`,
     url: BASE_URL,
     reuseExistingServer: !process.env['CI'],
-    timeout: 180_000,
+    timeout: 240_000,
   },
 });
