@@ -8,14 +8,14 @@
   <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-5">
     <app-stat-tile
       label="Total needs"
-      [value]="derived().totalNeeds | currency: 'INR' : 'symbol' : '1.0-0'"
+      [value]="derived().totalNeeds | inr"
       hint="per month"
       icon="check_circle"
       data-testid="spending-total-needs"
     />
     <app-stat-tile
       label="Total wants"
-      [value]="derived().totalWants | currency: 'INR' : 'symbol' : '1.0-0'"
+      [value]="derived().totalWants | inr"
       hint="per month"
       icon="redeem"
       data-testid="spending-total-wants"

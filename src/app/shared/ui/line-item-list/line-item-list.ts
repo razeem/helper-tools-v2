@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
+import { InrPipe } from '../../inr-pipe';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,7 +23,7 @@ import {
   selector: 'app-line-item-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CurrencyPipe,
+    InrPipe,
     FormsModule,
     DragDropModule,
     MatIconModule,
@@ -109,7 +109,7 @@ import {
           {{ addLabel() }}
         </button>
         <span class="total app-num" [attr.data-testid]="testid() + '-total'">
-          {{ total() | currency: 'INR' : 'symbol' : '1.0-0' }}
+          {{ total() | inr }}
         </span>
       </div>
     </div>

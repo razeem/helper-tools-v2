@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
+import { InrPipe } from '../../shared/inr-pipe';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { FinanceStore } from '../../core/finance/finance-store';
@@ -12,21 +12,54 @@ import { InlinePrompt } from '../../shared/ui/inline-prompt/inline-prompt';
 @Component({
   selector: 'app-saving',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CurrencyPipe,
-    RouterLink,
-    MatIconModule,
-    PageHeader,
-    SectionCard,
-    StatTile,
-    InlinePrompt,
-  ],
+  imports: [InrPipe, RouterLink, MatIconModule, PageHeader, SectionCard, StatTile, InlinePrompt],
   templateUrl: './saving.html',
   styles: `
     .tiers {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 0.85rem;
+    }
+    .ef-result {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem 1.5rem;
+      margin-top: 1.15rem;
+      padding: 1.25rem 1.4rem;
+      border-radius: var(--r-card);
+      background: var(
+        --gradient,
+        linear-gradient(120deg, var(--accent-1, #6366f1), var(--accent-2, #22d3ee))
+      );
+      color: #fff;
+    }
+    .ef-result__text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .ef-result__label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+    .ef-result__formula {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    .ef-result__amount {
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+    @media (max-width: 480px) {
+      .ef-result__amount {
+        font-size: 1.9rem;
+      }
     }
     .tier {
       display: flex;

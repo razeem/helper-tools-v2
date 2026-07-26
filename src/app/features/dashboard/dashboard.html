@@ -8,25 +8,25 @@
   <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-5">
     <app-stat-tile
       label="Gross income"
-      [value]="derived().gross | currency: 'INR' : 'symbol' : '1.0-0'"
+      [value]="derived().gross | inr"
       hint="per month"
       icon="payments"
     />
     <app-stat-tile
       label="Tax payable"
-      [value]="derived().taxPayable | currency: 'INR' : 'symbol' : '1.0-0'"
+      [value]="derived().taxPayable | inr"
       hint="per month · effective"
       icon="receipt_long"
     />
     <app-stat-tile
       label="Net income"
-      [value]="derived().netIncome | currency: 'INR' : 'symbol' : '1.0-0'"
+      [value]="derived().netIncome | inr"
       hint="per month"
       icon="savings"
     />
     <app-stat-tile
       label="Surplus vs minimum"
-      [value]="derived().surplus | currency: 'INR' : 'symbol' : '1.0-0'"
+      [value]="derived().surplus | inr"
       [tone]="derived().surplus >= 0 ? 'positive' : 'negative'"
       hint="per month"
       icon="trending_up"
@@ -85,9 +85,7 @@
             <div class="alloc-row__head">
               <span class="alloc-row__dot" [style.background]="b.color"></span>
               <span class="alloc-row__name">{{ b.label }}</span>
-              <span class="alloc-row__amt app-num">{{
-                b.amount | currency: 'INR' : 'symbol' : '1.0-0'
-              }}</span>
+              <span class="alloc-row__amt app-num">{{ b.amount | inr }}</span>
             </div>
             <div class="alloc-row__track">
               @for (s of b.segments; track s.label) {
@@ -106,9 +104,7 @@
                   <span class="alloc-row__leg">
                     <span class="alloc-row__leg-dot" [style.background]="s.color"></span>
                     {{ s.label }}
-                    <span class="app-num">{{
-                      s.amount | currency: 'INR' : 'symbol' : '1.0-0'
-                    }}</span>
+                    <span class="app-num">{{ s.amount | inr }}</span>
                   </span>
                 }
               </div>

@@ -8,18 +8,10 @@
   <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-5">
     <app-stat-tile
       label="Minimum monthly expense"
-      [value]="derived().minimumMonthlyExpense | currency: 'INR' : 'symbol' : '1.0-0'"
+      [value]="derived().minimumMonthlyExpense | inr"
       hint="needs + loan + mandatory investment"
       icon="payments"
-      tone="accent"
       data-testid="saving-minimum-tile"
-    />
-    <app-stat-tile
-      [label]="emergencyMultiplier() + '× emergency fund'"
-      [value]="derived().emergencyTarget | currency: 'INR' : 'symbol' : '1.0-0'"
-      hint="target corpus to build"
-      icon="shield"
-      data-testid="saving-target-tile"
     />
   </div>
 
@@ -61,6 +53,19 @@
           </button>
         }
       </div>
+
+      <div class="ef-result" data-testid="saving-target-tile">
+        <div class="ef-result__text">
+          <span class="ef-result__label">Emergency fund to build</span>
+          <span class="ef-result__formula app-num">
+            {{ derived().minimumMonthlyExpense | inr }}
+            × {{ emergencyMultiplier() }}× essential expense
+          </span>
+        </div>
+        <div class="ef-result__amount app-num" data-testid="saving-target-amount">
+          {{ derived().emergencyTarget | inr }}
+        </div>
+      </div>
     </app-section-card>
 
     <app-section-card
@@ -85,14 +90,14 @@
               <small>{{ row.hint }}</small>
             </a>
             <span class="breakdown__value app-num">
-              {{ row.value | currency: 'INR' : 'symbol' : '1.0-0' }}
+              {{ row.value | inr }}
             </span>
           </li>
         }
         <li class="breakdown__row breakdown__row--total">
           <span class="breakdown__label"><span>Minimum monthly expense</span></span>
           <span class="breakdown__value app-num" data-testid="saving-breakdown-total">
-            {{ derived().minimumMonthlyExpense | currency: 'INR' : 'symbol' : '1.0-0' }}
+            {{ derived().minimumMonthlyExpense | inr }}
           </span>
         </li>
       </ul>

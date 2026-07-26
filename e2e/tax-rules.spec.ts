@@ -12,7 +12,7 @@ test('editing a new-regime slab rate recomputes the tax end-to-end', async ({ pa
   await page.getByTestId('nav-tax').click();
   await page.getByTestId('tax-regime').getByText('New').click();
   // Baseline with shipped FY 2025-26 slabs.
-  await expect(page.getByTestId('tax-total-tile')).toContainText('150,800');
+  await expect(page.getByTestId('tax-total-tile')).toContainText('1,50,800');
 
   // Open Settings → Tax rules and bump the 4–8L slab from 5% to 10%.
   await page.getByTestId('avatar-menu').click();
@@ -23,7 +23,7 @@ test('editing a new-regime slab rate recomputes the tax end-to-end', async ({ pa
   await page.keyboard.press('Escape'); // close the dialog
 
   // The extra 5% on the full ₹4L band adds ₹20,000 + 4% cess → ₹1,71,600.
-  await expect(page.getByTestId('tax-total-tile')).toContainText('171,600');
+  await expect(page.getByTestId('tax-total-tile')).toContainText('1,71,600');
 });
 
 test('reset restores the shipped defaults', async ({ page }) => {

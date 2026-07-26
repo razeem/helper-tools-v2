@@ -26,12 +26,7 @@ type Regime = 'old' | 'new';
             >. Edit any figure and every pillar recomputes.
           </p>
         </div>
-        <button
-          mat-stroked-button
-          type="button"
-          (click)="reset()"
-          data-testid="tax-rules-reset"
-        >
+        <button mat-stroked-button type="button" (click)="reset()" data-testid="tax-rules-reset">
           <mat-icon>restart_alt</mat-icon>
           Reset
         </button>

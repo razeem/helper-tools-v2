@@ -36,18 +36,11 @@
         }
 
         <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
-          <app-stat-tile
-            label="Gross income"
-            [value]="gross() | currency: 'INR' : 'symbol' : '1.0-0'"
-            icon="payments"
-          />
-          <app-stat-tile
-            label="Net taxable"
-            [value]="result().netTaxableIncome | currency: 'INR' : 'symbol' : '1.0-0'"
-          />
+          <app-stat-tile label="Gross income" [value]="gross() | inr" icon="payments" />
+          <app-stat-tile label="Net taxable" [value]="result().netTaxableIncome | inr" />
           <app-stat-tile
             label="Total tax payable"
-            [value]="result().totalTax | currency: 'INR' : 'symbol' : '1.0-0'"
+            [value]="result().totalTax | inr"
             tone="accent"
             data-testid="tax-total-tile"
           />
@@ -102,7 +95,7 @@
             <ng-container matColumnDef="amount">
               <th mat-header-cell *matHeaderCellDef class="text-right">Amount</th>
               <td mat-cell *matCellDef="let row" class="text-right">
-                {{ row.amount | currency: 'INR' : 'symbol' : '1.0-0' }}
+                {{ row.amount | inr }}
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="deductionColumns"></tr>
@@ -124,13 +117,13 @@
             <ng-container matColumnDef="taxable">
               <th mat-header-cell *matHeaderCellDef class="text-right">Taxable</th>
               <td mat-cell *matCellDef="let s" class="text-right">
-                {{ s.taxableInSlab | currency: 'INR' : 'symbol' : '1.0-0' }}
+                {{ s.taxableInSlab | inr }}
               </td>
             </ng-container>
             <ng-container matColumnDef="tax">
               <th mat-header-cell *matHeaderCellDef class="text-right">Tax</th>
               <td mat-cell *matCellDef="let s" class="text-right">
-                {{ s.tax | currency: 'INR' : 'symbol' : '1.0-0' }}
+                {{ s.tax | inr }}
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="slabColumns"></tr>
@@ -140,10 +133,10 @@
           <p class="note">
             @if (result().rebate > 0) {
               Includes an 87A rebate of
-              {{ result().rebate | currency: 'INR' : 'symbol' : '1.0-0' }} and
+              {{ result().rebate | inr }} and
             }
             4% health &amp; education cess of
-            {{ result().cess | currency: 'INR' : 'symbol' : '1.0-0' }}.
+            {{ result().cess | inr }}.
           </p>
         </app-section-card>
       </div>
@@ -163,11 +156,11 @@
           <div class="compare__col" [class.compare__col--best]="comparison().better === 'old'">
             <span class="app-eyebrow">Old regime</span>
             <div class="compare__tax app-num" data-testid="compare-old">
-              {{ comparison().old.totalTax | currency: 'INR' : 'symbol' : '1.0-0' }}
+              {{ comparison().old.totalTax | inr }}
             </div>
             <div class="compare__meta">
               Net taxable
-              {{ comparison().old.netTaxableIncome | currency: 'INR' : 'symbol' : '1.0-0' }}
+              {{ comparison().old.netTaxableIncome | inr }}
             </div>
             <div class="compare__meta">
               Effective
@@ -181,11 +174,11 @@
           <div class="compare__col" [class.compare__col--best]="comparison().better === 'new'">
             <span class="app-eyebrow">New regime</span>
             <div class="compare__tax app-num" data-testid="compare-new">
-              {{ comparison().new.totalTax | currency: 'INR' : 'symbol' : '1.0-0' }}
+              {{ comparison().new.totalTax | inr }}
             </div>
             <div class="compare__meta">
               Net taxable
-              {{ comparison().new.netTaxableIncome | currency: 'INR' : 'symbol' : '1.0-0' }}
+              {{ comparison().new.netTaxableIncome | inr }}
             </div>
             <div class="compare__meta">
               Effective
@@ -201,7 +194,7 @@
           @if (gross() > 0) {
             The <strong>{{ comparison().better === 'new' ? 'new' : 'old' }}</strong> regime saves
             you
-            {{ comparison().saving | currency: 'INR' : 'symbol' : '1.0-0' }}
+            {{ comparison().saving | inr }}
             @if (comparison().better !== inputs().tax.regime) {
               — switch on the Calculator tab to apply it.
             }

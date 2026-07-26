@@ -50,3 +50,41 @@ export function getDb(): Promise<IDBPDatabase<HelperToolsSchema>> {
 export function resetDbConnection(): void {
   dbPromise = null;
 }
+
+/**
+ * Read every stored collection as a `{ key -> envelope }` map. Used by the
+ * data-transfer export to snapshot the whole model in one pass (there is no
+ * other bulk reader; feature stores only ever touch their own single key).
+ */
+export async function dumpAllCollections(): Promise<Record<string, StoredEnvelope>> {
+  const db = await getDb();
+  const [keys, values] = await Promise.all([
+    db.getAllKeys('collections'),
+    db.getAll('collections'),
+  ]);
+  const out: Record<string, StoredEnvelope> = {};
+  keys.forEach((key, i) => {
+    out[key] = values[i];
+  });
+  return out;
+}
+
+/**
+ * Bulk-install a `{ key -> envelope }` map in a single transaction. With
+ * `replace`, the whole store is cleared first (full overwrite); otherwise each
+ * supplied key is written over its existing value (per-collection merge) and
+ * untouched keys are left alone. A page reload afterwards lets every store
+ * re-hydrate + run its own migrator.
+ */
+export async function writeCollections(
+  envelopes: Record<string, StoredEnvelope>,
+  { replace }: { replace: boolean },
+): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction('collections', 'readwrite');
+  if (replace) await tx.store.clear();
+  await Promise.all(
+    Object.entries(envelopes).map(([key, envelope]) => tx.store.put(envelope, key)),
+  );
+  await tx.done;
+}

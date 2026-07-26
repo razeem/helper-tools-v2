@@ -24,6 +24,10 @@ Deployment is a **GitHub Actions pipeline** (`.github/workflows/deploy.yml`), no
 
 One-time repo setting: **Settings → Pages → Build and deployment → Source = "GitHub Actions"**. The site publishes to `https://<owner>.github.io/<repo>/`. `npm ci` requires `package-lock.json` to be committed.
 
+### PWA (installable + offline)
+
+The app is a **Progressive Web App** via `@angular/service-worker`. `provideServiceWorker('ngsw-worker.js', { enabled: !isDevMode() })` in `app.config.ts` registers the worker **only in production builds** (disabled under `ng serve`, so the Playwright dev server is unaffected). `ngsw-config.json` (referenced from `angular.json` `build > serviceWorker`) prefetches the app shell and lazily caches `public/**` + Google Fonts; `public/manifest.webmanifest` (linked from `index.html`, with Apple PWA metas) makes it installable. All manifest/SW paths are **relative** (`start_url`/`scope` = `.`) so they stay valid under the GitHub Pages subpath — `ngsw.json`'s `index` is emitted with the base-href prefix automatically. Icons: `favicon.svg` + `icon-192.png` + `icon-512.png` (the 512 doubles as the maskable icon). Offline needs no app code — data already lives in IndexedDB; the SW just caches the shell. The deploy workflow needs no changes (SW + manifest ship in `dist/`).
+
 ## Architecture
 
 A personal-finance dashboard organised as **7 pillars**. Feature-first, standalone components, no NgModules.
@@ -117,6 +121,12 @@ Tax math lives in `core/finance/tax.model.ts` — pure `calculateOldRegimeTax` /
 The config is **user-editable**: `TaxConfigStore` (`core/finance/tax-config-store.ts`, `providedIn:'root'`) binds a `tax-config` collection and exposes setters for slabs (add/remove/edit), standard deduction, rebate limit/amount, cess, and 80C/80D caps, plus `reset()` (restore shipped defaults). `FinanceStore.derived` reads `taxConfig.config()` so the **whole app recomputes** when rules change. The editor is the **"Tax rules" tab** in the Settings dialog (`features/settings/tax-rules-form.ts`). To update the shipped baseline for a new FY, edit `DEFAULT_TAX_CONFIG` in one place.
 
 **In-page tabs are deep-linkable**: Income (`?tab=minimum|goals|ideas`) and Tax (`?tab=calculator|comparer`) sync a `?tab=` query param to the `mat-tab-group` `selectedIndex` (via `toSignal(route.queryParamMap)` + `router.navigate(..., { replaceUrl: true })`). A query param (not a fragment or child routes) keeps tab components mounted so local state — e.g. the ICER sort snapshot — survives tab switches. The **ICER table sorts on a one-shot snapshot** (`order` signal set on header click), never a live `computed`, so editing a rating never reorders rows mid-edit.
+
+## Cross-device data transfer (export / import)
+
+Because everything is local to one device, `core/transfer/` moves the whole model across devices. `transfer.model.ts` is **pure + unit-tested**: `encode` snapshots every stored collection (each still in its `StoredEnvelope`, so versions travel with the data) → `gzip(JSON)` (native `CompressionStream`, driven via writer/reader so it also runs under jsdom) → base64, behind a `PFD1:` marker; `decode` reverses it with typed `TransferError`s; `summarize` classifies each collection against `KNOWN_COLLECTIONS` (**keep those versions in sync with each store's `bind({ version })`**) as `ok` / `will-migrate` / `newer-unsupported` / `unknown`. **Blobs** (the profile photo) are walked into `{ __blob__, type }` sentinels and back — `encode({ includeBlobs: false })` drops them for the QR path.
+
+`TransferService` (`providedIn: 'root'`) bridges it to storage via new `db.ts` helpers `dumpAllCollections()` / `writeCollections(map, { replace })`, then **reloads** so stores re-hydrate + run their migrators. **Merge = per-collection, incoming wins** (present collections overwrite, absent ones untouched); **Replace** clears the store first; `newer-unsupported` collections are always skipped. UI is the **"Transfer data"** tab in the Settings dialog (`features/settings/data-transfer.ts`), with copy/paste + QR. QR uses **`qrcode`** (generate) and **`jsqr`** (scan fallback behind native `BarcodeDetector`), both `await import()`-ed like exceljs and allow-listed in `angular.json`; the camera scanner is `features/settings/qr-scanner.ts`. QR omits the photo (too large for one code); copy/paste carries everything.
 
 ## Testing notes
 

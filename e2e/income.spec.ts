@@ -52,11 +52,11 @@ test.describe('Income · Minimum Income', () => {
 
     await page.getByRole('button', { name: /Advanced/ }).click();
     await expect(page.getByTestId('month-base-0')).toBeVisible();
-    await expect(page.getByTestId('salary-annual-total')).toContainText('1,200,000');
+    await expect(page.getByTestId('salary-annual-total')).toContainText('12,00,000');
 
     // Add a ₹3,00,000 March bonus (index 11) → annual total ₹15,00,000.
     await page.getByTestId('month-bonus-11').fill('300000');
-    await expect(page.getByTestId('salary-annual-total')).toContainText('1,500,000');
+    await expect(page.getByTestId('salary-annual-total')).toContainText('15,00,000');
   });
 });
 

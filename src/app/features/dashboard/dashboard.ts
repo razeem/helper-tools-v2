@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, HostListener, inject } from '@angular/core';
-import { CurrencyPipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
+import { InrPipe, formatInr } from '../../shared/inr-pipe';
+import { PreferencesStore } from '../../core/preferences/preferences-store';
 import { MatIconModule } from '@angular/material/icon';
 import { FinanceStore } from '../../core/finance/finance-store';
 import { PILLARS } from '../../app.routes';
@@ -30,20 +32,13 @@ interface AllocView {
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CurrencyPipe,
-    DecimalPipe,
-    MatIconModule,
-    PageHeader,
-    StatTile,
-    PillarCard,
-    SectionCard,
-  ],
+  imports: [InrPipe, DecimalPipe, MatIconModule, PageHeader, StatTile, PillarCard, SectionCard],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
 export class Dashboard {
   private readonly store = inject(FinanceStore);
+  private readonly prefs = inject(PreferencesStore);
 
   protected readonly derived = this.store.derived;
   protected readonly pillars = PILLARS.filter((p) => p.path !== 'dashboard');
@@ -154,7 +149,7 @@ export class Dashboard {
 
   protected pillarValue(path: string): string {
     const d = this.derived();
-    const fmt = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
+    const fmt = (n: number) => formatInr(n, this.prefs.numberFormat());
     switch (path) {
       case 'income':
         return fmt(d.netIncome);

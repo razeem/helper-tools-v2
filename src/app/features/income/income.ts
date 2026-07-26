@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CurrencyPipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
+import { InrPipe } from '../../shared/inr-pipe';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
@@ -11,7 +12,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { FinanceStore } from '../../core/finance/finance-store';
-import { FY_MONTHS, icerScore, IdeaRow, makeGoal, makeIdea } from '../../core/finance/finance.model';
+import {
+  FY_MONTHS,
+  icerScore,
+  IdeaRow,
+  makeGoal,
+  makeIdea,
+} from '../../core/finance/finance.model';
 import { PageHeader } from '../../shared/ui/page-header/page-header';
 import { SectionCard } from '../../shared/ui/section-card/section-card';
 import { StatTile } from '../../shared/ui/stat-tile/stat-tile';
@@ -25,7 +32,7 @@ type SortKey = 'name' | IcerAxis | 'score';
   selector: 'app-income',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CurrencyPipe,
+    InrPipe,
     DecimalPipe,
     RouterLink,
     FormsModule,

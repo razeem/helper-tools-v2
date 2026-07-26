@@ -1,0 +1,233 @@
+<div class="flex flex-col gap-5 pt-5">
+  <!-- Compact calculator: sliders left · donut + amounts right -->
+  <app-section-card title="EMI Calculator" icon="calculate">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6 items-center">
+      <!-- Left: sliders -->
+      <div class="flex flex-col gap-5">
+        <!-- Loan Amount -->
+        <div>
+          <div class="flex items-center justify-between gap-3 mb-1">
+            <label for="emi-principal" class="text-sm font-medium">Loan Amount</label>
+            <div
+              class="flex items-center gap-1 rounded-lg px-2.5 py-1 bg-[var(--mat-sys-primary-container)] text-[var(--mat-sys-on-primary-container)]"
+            >
+              <span class="opacity-70">₹</span>
+              <input
+                id="emi-principal"
+                class="w-24 bg-transparent text-right font-semibold outline-none app-num"
+                type="number"
+                [min]="PRINCIPAL.min"
+                inputmode="numeric"
+                [ngModel]="principal()"
+                (ngModelChange)="setNumber(principal, $event)"
+                data-testid="emi-principal"
+              />
+            </div>
+          </div>
+          <mat-slider
+            [min]="PRINCIPAL.min"
+            [max]="PRINCIPAL.max"
+            [step]="PRINCIPAL.step"
+            class="emi-slider"
+          >
+            <input
+              matSliderThumb
+              [ngModel]="principal()"
+              (ngModelChange)="principal.set($event)"
+              aria-label="Loan amount"
+            />
+          </mat-slider>
+        </div>
+
+        <!-- Interest Rate -->
+        <div>
+          <div class="flex items-center justify-between gap-3 mb-1">
+            <label for="emi-rate" class="text-sm font-medium">Interest Rate (p.a)</label>
+            <div
+              class="flex items-center gap-1 rounded-lg px-2.5 py-1 bg-[var(--mat-sys-primary-container)] text-[var(--mat-sys-on-primary-container)]"
+            >
+              <input
+                id="emi-rate"
+                class="w-14 bg-transparent text-right font-semibold outline-none app-num"
+                type="number"
+                [min]="RATE.min"
+                [step]="RATE.step"
+                inputmode="decimal"
+                [ngModel]="annualRatePct()"
+                (ngModelChange)="setNumber(annualRatePct, $event)"
+                data-testid="emi-rate"
+              />
+              <span class="opacity-70">%</span>
+            </div>
+          </div>
+          <mat-slider [min]="RATE.min" [max]="RATE.max" [step]="RATE.step" class="emi-slider">
+            <input
+              matSliderThumb
+              [ngModel]="annualRatePct()"
+              (ngModelChange)="annualRatePct.set($event)"
+              aria-label="Interest rate"
+            />
+          </mat-slider>
+        </div>
+
+        <!-- Time Period -->
+        <div>
+          <div class="flex items-center justify-between gap-3 mb-1">
+            <label for="emi-tenure" class="text-sm font-medium">Time Period in Years</label>
+            <div
+              class="flex items-center gap-1 rounded-lg px-2.5 py-1 bg-[var(--mat-sys-primary-container)] text-[var(--mat-sys-on-primary-container)]"
+            >
+              <input
+                id="emi-tenure"
+                class="w-14 bg-transparent text-right font-semibold outline-none app-num"
+                type="number"
+                [min]="TENURE.min"
+                [max]="TENURE.max"
+                inputmode="numeric"
+                [ngModel]="tenureYears()"
+                (ngModelChange)="setNumber(tenureYears, $event)"
+                data-testid="emi-tenure"
+              />
+              <span class="opacity-70">yr</span>
+            </div>
+          </div>
+          <mat-slider [min]="TENURE.min" [max]="TENURE.max" [step]="TENURE.step" class="emi-slider">
+            <input
+              matSliderThumb
+              [ngModel]="tenureYears()"
+              (ngModelChange)="tenureYears.set($event)"
+              aria-label="Time period in years"
+            />
+          </mat-slider>
+        </div>
+      </div>
+
+      <!-- Right: donut + amounts -->
+      <div class="flex items-center gap-5 rounded-xl p-4 bg-[var(--mat-sys-surface-container)]">
+        <svg viewBox="0 0 100 100" class="w-32 h-32 shrink-0 -rotate-90" aria-hidden="true">
+          <circle
+            class="donut-seg"
+            cx="50"
+            cy="50"
+            r="42"
+            fill="none"
+            stroke="var(--mat-sys-primary-container)"
+            stroke-width="14"
+            [attr.stroke-dasharray]="donut().loanLen + ' ' + (donut().c - donut().loanLen)"
+          />
+          <circle
+            class="donut-seg"
+            cx="50"
+            cy="50"
+            r="42"
+            fill="none"
+            stroke="var(--mat-sys-primary)"
+            stroke-width="14"
+            [attr.stroke-dasharray]="donut().interestLen + ' ' + (donut().c - donut().interestLen)"
+            [attr.stroke-dashoffset]="-donut().loanLen"
+          />
+        </svg>
+
+        <dl class="flex-1 m-0 text-sm">
+          <div
+            class="flex items-center justify-between gap-3 py-2 border-b border-[var(--mat-sys-outline-variant)]"
+          >
+            <dt class="font-medium">EMI Amount</dt>
+            <dd class="m-0 text-base font-bold app-num" data-testid="emi-monthly">
+              {{ result().emi | inr }}
+            </dd>
+          </div>
+          <div
+            class="flex items-center justify-between gap-3 py-2 border-b border-[var(--mat-sys-outline-variant)]"
+          >
+            <dt class="font-medium">Amount To Be Paid</dt>
+            <dd class="m-0 font-semibold app-num" data-testid="emi-total">
+              {{ result().totalPayment | inr }}
+            </dd>
+          </div>
+          <div
+            class="flex items-center justify-between gap-3 py-2 border-b border-[var(--mat-sys-outline-variant)]"
+          >
+            <dt class="flex items-center gap-2 font-medium">
+              <span
+                class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--mat-sys-primary-container)]"
+              ></span>
+              Loan Amount
+            </dt>
+            <dd class="m-0 font-semibold app-num">
+              {{ principal() | inr }}
+            </dd>
+          </div>
+          <div class="flex items-center justify-between gap-3 py-2">
+            <dt class="flex items-center gap-2 font-medium">
+              <span
+                class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--mat-sys-primary)]"
+              ></span>
+              Interest Amount
+            </dt>
+            <dd class="m-0 font-semibold app-num" data-testid="emi-interest">
+              {{ result().totalInterest | inr }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </app-section-card>
+
+  <!-- Amortization split-up: year accordion, expand to reveal months -->
+  @if (hasResult()) {
+    <app-section-card
+      title="Amortization schedule"
+      icon="table_chart"
+      subtitle="How your loan is paid over time — interest shrinks as the balance reduces. Expand a year to see its months."
+    >
+      <mat-accordion multi>
+        @for (y of result().years; track y.year) {
+          <mat-expansion-panel [attr.data-testid]="'emi-year-' + y.year">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="font-semibold">Year {{ y.year }}</mat-panel-title>
+              <mat-panel-description class="flex-wrap gap-x-4 gap-y-1 justify-end app-num">
+                <span>Principal {{ y.principal | inr }}</span>
+                <span>Interest {{ y.interest | inr }}</span>
+                <span>Balance {{ y.closingBalance | inr }}</span>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <table mat-table [dataSource]="y.months" class="w-full">
+              <ng-container matColumnDef="month">
+                <th mat-header-cell *matHeaderCellDef>Month</th>
+                <td mat-cell *matCellDef="let m">{{ m.month }}</td>
+              </ng-container>
+              <ng-container matColumnDef="principal">
+                <th mat-header-cell *matHeaderCellDef class="text-right">Principal</th>
+                <td mat-cell *matCellDef="let m" class="text-right">
+                  {{ m.principal | inr }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="interest">
+                <th mat-header-cell *matHeaderCellDef class="text-right">Interest</th>
+                <td mat-cell *matCellDef="let m" class="text-right">
+                  {{ m.interest | inr }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="emi">
+                <th mat-header-cell *matHeaderCellDef class="text-right">EMI</th>
+                <td mat-cell *matCellDef="let m" class="text-right">
+                  {{ m.emi | inr }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="balance">
+                <th mat-header-cell *matHeaderCellDef class="text-right">Balance</th>
+                <td mat-cell *matCellDef="let m" class="text-right">
+                  {{ m.balance | inr }}
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="monthColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: monthColumns"></tr>
+            </table>
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+    </app-section-card>
+  }
+</div>

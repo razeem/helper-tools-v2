@@ -4,9 +4,14 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
-import { PreferencesStore, ThemeMode } from '../../core/preferences/preferences-store';
+import {
+  NumberFormat,
+  PreferencesStore,
+  ThemeMode,
+} from '../../core/preferences/preferences-store';
 import { ProfileForm } from './profile-form';
 import { TaxRulesForm } from './tax-rules-form';
+import { DataTransfer } from './data-transfer';
 
 @Component({
   selector: 'app-settings-dialog',
@@ -19,6 +24,7 @@ import { TaxRulesForm } from './tax-rules-form';
     MatIconModule,
     ProfileForm,
     TaxRulesForm,
+    DataTransfer,
   ],
   template: `
     <div class="head">
@@ -59,6 +65,28 @@ import { TaxRulesForm } from './tax-rules-form';
                 <mat-button-toggle value="dark"><mat-icon>dark_mode</mat-icon></mat-button-toggle>
               </mat-button-toggle-group>
             </section>
+
+            <section class="pref">
+              <div class="pref__label">
+                <span class="pref__title">Number format</span>
+                <span class="pref__help">
+                  Indian grouping (₹10,00,000) or international (₹1,000,000).
+                </span>
+              </div>
+              <mat-button-toggle-group
+                [value]="prefs.numberFormat()"
+                (change)="setNumberFormat($event.value)"
+                data-testid="number-format-toggle"
+              >
+                <mat-button-toggle value="indian">Indian</mat-button-toggle>
+                <mat-button-toggle value="international">Intl</mat-button-toggle>
+              </mat-button-toggle-group>
+            </section>
+          </div>
+        </mat-tab>
+        <mat-tab label="Transfer data">
+          <div class="pane">
+            <app-data-transfer />
           </div>
         </mat-tab>
       </mat-tab-group>
@@ -87,6 +115,9 @@ import { TaxRulesForm } from './tax-rules-form';
       justify-content: space-between;
       gap: 1rem;
     }
+    .pref + .pref {
+      margin-top: 1.25rem;
+    }
     .pref__title {
       display: block;
       font-weight: 600;
@@ -103,5 +134,9 @@ export class SettingsDialog {
 
   protected setTheme(theme: ThemeMode): void {
     this.prefs.setTheme(theme);
+  }
+
+  protected setNumberFormat(format: NumberFormat): void {
+    this.prefs.setNumberFormat(format);
   }
 }

@@ -32,10 +32,7 @@
                 (ngModelChange)="setGross($event)"
                 data-testid="income-gross"
               />
-              <mat-hint
-                >≈ {{ derived().annualGross | currency: 'INR' : 'symbol' : '1.0-0' }} /
-                year</mat-hint
-              >
+              <mat-hint>≈ {{ derived().annualGross | inr }} / year</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Short-term savings target (monthly)</mat-label>
@@ -58,8 +55,7 @@
                 <mat-icon>calendar_month</mat-icon>&nbsp;Advanced · monthly breakdown
               </mat-panel-title>
               <mat-panel-description>
-                {{ fyLabel() }} ·
-                {{ derived().annualGross | currency: 'INR' : 'symbol' : '1.0-0' }}/yr
+                {{ fyLabel() }} · {{ derived().annualGross | inr }}/yr
               </mat-panel-description>
             </mat-expansion-panel-header>
 
@@ -105,7 +101,7 @@
             <div class="months__total">
               <span>Annual total · {{ fyLabel() }}</span>
               <strong class="app-num" data-testid="salary-annual-total">{{
-                derived().annualGross | currency: 'INR' : 'symbol' : '1.0-0'
+                derived().annualGross | inr
               }}</strong>
             </div>
           </mat-expansion-panel>
@@ -114,30 +110,26 @@
         <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
           <app-stat-tile
             label="Income tax"
-            [value]="derived().taxPayable | currency: 'INR' : 'symbol' : '1.0-0'"
-            [hint]="
-              'per month · ' +
-              (derived().taxAnnual | currency: 'INR' : 'symbol' : '1.0-0') +
-              ' / yr'
-            "
+            [value]="derived().taxPayable | inr"
+            [hint]="'per month · ' + (derived().taxAnnual | inr) + ' / yr'"
             icon="receipt_long"
             data-testid="income-tax"
           />
           <app-stat-tile
             label="Net income"
-            [value]="derived().netIncome | currency: 'INR' : 'symbol' : '1.0-0'"
+            [value]="derived().netIncome | inr"
             hint="Gross − tax · per month"
             icon="savings"
           />
           <app-stat-tile
             label="Minimum income"
-            [value]="derived().minimumIncome | currency: 'INR' : 'symbol' : '1.0-0'"
+            [value]="derived().minimumIncome | inr"
             hint="per month"
             data-testid="income-minimum"
           />
           <app-stat-tile
             label="Surplus vs minimum"
-            [value]="derived().surplus | currency: 'INR' : 'symbol' : '1.0-0'"
+            [value]="derived().surplus | inr"
             [tone]="derived().surplus >= 0 ? 'positive' : 'negative'"
             hint="per month"
             data-testid="income-surplus"
@@ -163,14 +155,14 @@
                   }
                 </span>
                 <span class="breakdown__amount app-num">
-                  {{ row.amount | currency: 'INR' : 'symbol' : '1.0-0' }}
+                  {{ row.amount | inr }}
                 </span>
               </li>
             }
             <li class="breakdown__row breakdown__row--total">
               <span class="breakdown__label">Minimum income</span>
               <span class="breakdown__amount app-num">
-                {{ derived().minimumIncome | currency: 'INR' : 'symbol' : '1.0-0' }}
+                {{ derived().minimumIncome | inr }}
               </span>
             </li>
           </ul>

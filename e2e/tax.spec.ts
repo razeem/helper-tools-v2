@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('calculates old-regime tax from the shared gross', async ({ page }) => {
-  await expect(page.getByTestId('tax-total-tile')).toContainText('163,800');
+  await expect(page.getByTestId('tax-total-tile')).toContainText('1,63,800');
 });
 
 test('recomputes when a deduction changes', async ({ page }) => {
@@ -20,7 +20,7 @@ test('recomputes when a deduction changes', async ({ page }) => {
 
 test('regime comparer highlights the cheaper regime', async ({ page }) => {
   await page.getByRole('tab', { name: 'Regime comparer' }).click();
-  await expect(page.getByTestId('compare-old')).toContainText('163,800');
+  await expect(page.getByTestId('compare-old')).toContainText('1,63,800');
   // FY 2025-26: ₹12L under the new regime is fully rebated to ₹0.
   await expect(page.getByTestId('compare-new')).toContainText('₹0');
   await expect(page.getByTestId('compare-recommendation')).toContainText('new');

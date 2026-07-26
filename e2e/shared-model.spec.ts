@@ -12,8 +12,8 @@ test('gross entered in Income flows into Tax without re-entry', async ({ page })
 
   await page.getByTestId('nav-tax').click();
   await expect(page).toHaveURL(/\/tax$/);
-  // Annual gross 1,200,000 − 50,000 standard deduction = 1,150,000 net taxable (old regime).
-  await expect(page.getByText(/1,150,000/).first()).toBeVisible();
+  // Annual gross 12,00,000 − 50,000 standard deduction = 11,50,000 net taxable (old regime).
+  await expect(page.getByText(/11,50,000/).first()).toBeVisible();
   await expect(page.getByTestId('tax-total-tile')).toBeVisible();
 
   // Tax has no gross input of its own — it's owned by Income only.
