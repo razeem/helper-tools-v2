@@ -1,4 +1,5 @@
-import { Injectable, Signal, signal } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID, Signal, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { getDb, StoredEnvelope } from './db';
 
 /** Upgrade a stored document from an older schema version to the current shape. */
@@ -44,15 +45,22 @@ export interface PersistentCollection<T> {
  */
 @Injectable({ providedIn: 'root' })
 export class StorageService {
+  // IndexedDB only exists in the browser. During the build-time prerender
+  // (server platform) every collection stays at its defaults and never touches
+  // the DB — client-side hydration then loads the real data.
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   bind<T>(config: CollectionConfig<T>): PersistentCollection<T> {
     const debounceMs = config.debounceMs ?? 250;
     const value = signal<T>(config.defaults);
     const ready = signal(false);
+    const isBrowser = this.isBrowser;
 
     let pending: ReturnType<typeof setTimeout> | null = null;
     let lastWrite: Promise<void> = Promise.resolve();
 
     const schedulePersist = (data: T): void => {
+      if (!isBrowser) return;
       if (pending) clearTimeout(pending);
       pending = setTimeout(() => {
         pending = null;
@@ -82,9 +90,16 @@ export class StorageService {
         pending = null;
       }
       value.set(config.defaults);
+      if (!isBrowser) return;
       const db = await getDb();
       await db.delete('collections', config.key);
     };
+
+    // No IndexedDB during prerender — keep defaults and mark ready immediately.
+    if (!isBrowser) {
+      ready.set(true);
+      return { value: value.asReadonly(), ready: ready.asReadonly(), set, update, patch, reset, flush };
+    }
 
     // Hydrate + migrate asynchronously; never blocks first paint.
     void (async () => {

@@ -6,7 +6,7 @@ const SAMPLE_PNG = Buffer.from(
 );
 
 async function openSettings(page: import('@playwright/test').Page) {
-  await page.goto('/dashboard');
+  await page.goto('/');
   await page.getByTestId('avatar-menu').click();
   await page.getByTestId('open-settings').click();
   await expect(page.getByTestId('profile-name')).toBeVisible();

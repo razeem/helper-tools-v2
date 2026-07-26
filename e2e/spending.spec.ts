@@ -43,7 +43,7 @@ test('needs and wants feed the dashboard aggregate', async ({ page }) => {
   await page.getByTestId('want-value').first().fill('10000');
 
   await page.getByTestId('nav-dashboard').click();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId('dashboard-surplus')).toBeVisible();
   // Needs + Wants roll into the Living bucket (+ the default ₹1,850 EPF): ₹31,850.
   await expect(page.getByTestId('alloc-living')).toContainText('31,850');

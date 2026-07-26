@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test';
 
-test('redirects root to the dashboard and shows pillars', async ({ page }) => {
+test('serves the dashboard at the root and shows pillars', async ({ page }) => {
   await page.goto('/');
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId('pillar-income')).toBeVisible();
   await expect(page.getByTestId('pillar-tax')).toBeVisible();
   await expect(page.getByTestId('pillar-saving')).toBeVisible();
 });
 
 test('sidebar navigates between pillars', async ({ page }) => {
-  await page.goto('/dashboard');
+  await page.goto('/');
   await page.getByTestId('nav-income').click();
   await expect(page).toHaveURL(/\/income$/);
   await page.getByTestId('nav-tax').click();
@@ -65,12 +65,15 @@ test('insurance premiums support monthly/yearly and convert to a monthly total',
 test('old deep links redirect to the new routes', async ({ page }) => {
   await page.goto('/income-tax');
   await expect(page).toHaveURL(/\/tax$/);
+  // /profile and /dashboard now redirect to the root (the home is served at '/').
   await page.goto('/profile');
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto('/dashboard');
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test('sidebar collapse persists across reload', async ({ page }) => {
-  await page.goto('/dashboard');
+  await page.goto('/');
   const income = page.getByTestId('nav-income');
   await expect(income).toBeVisible();
 

@@ -1,4 +1,5 @@
-import { computed, effect, inject, Injectable } from '@angular/core';
+import { computed, effect, inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { StorageService } from '../storage/storage.service';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
@@ -42,12 +43,16 @@ export class PreferencesStore {
   readonly theme = computed(() => this.value().theme);
   readonly numberFormat = computed(() => this.value().numberFormat);
 
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   constructor() {
     // Reflect the chosen theme onto the document root. `data-theme` drives the
     // bio design-token overrides in styles.scss; removing it (system mode) lets
-    // the `prefers-color-scheme` media query decide.
+    // the `prefers-color-scheme` media query decide. Skipped during prerender —
+    // the server render only ever sees the un-hydrated `system` default.
     effect(() => {
       const theme = this.theme();
+      if (!this.isBrowser) return;
       const root = document.documentElement;
       if (theme === 'system') {
         root.removeAttribute('data-theme');

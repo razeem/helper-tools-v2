@@ -14,7 +14,7 @@ test('round-trips the whole model through an export code (replace)', async ({ pa
   await page.waitForTimeout(500); // let the debounced write settle before export
 
   // 2. Generate a transfer code and capture it.
-  await page.goto('/dashboard');
+  await page.goto('/');
   await openTransferTab(page);
   await page.getByTestId('transfer-generate').click();
   const codeBox = page.getByTestId('transfer-export-code');
@@ -28,7 +28,7 @@ test('round-trips the whole model through an export code (replace)', async ({ pa
   await page.waitForTimeout(500);
 
   // 4. Paste the code and preview it.
-  await page.goto('/dashboard');
+  await page.goto('/');
   await openTransferTab(page);
   await page.getByTestId('transfer-import-code').fill(code);
   await page.getByTestId('transfer-preview').click();
@@ -46,7 +46,7 @@ test('round-trips the whole model through an export code (replace)', async ({ pa
 });
 
 test('shows a friendly error for an invalid code', async ({ page }) => {
-  await page.goto('/dashboard');
+  await page.goto('/');
   await openTransferTab(page);
   await page.getByTestId('transfer-import-code').fill('this is not a valid code');
   await page.getByTestId('transfer-preview').click();

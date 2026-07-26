@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('spend allocation: dragging a handle (arrow keys) adjusts the target ratio', async ({
   page,
 }) => {
-  await page.goto('/dashboard');
+  await page.goto('/');
   // Default target: Living 75 : Safety 15 : Growth 10.
   await expect(page.getByTestId('target-living')).toContainText('75%');
   await expect(page.getByTestId('target-safety')).toContainText('15%');

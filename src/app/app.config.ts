@@ -10,6 +10,7 @@ import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from 
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideServiceWorker } from '@angular/service-worker';
 import { routes } from './app.routes';
+import { provideClientHydration } from '@angular/platform-browser';
 
 // Enables the Indian lakh/crore digit grouping used by the INR pipe.
 registerLocaleData(localeEnIn);
@@ -31,5 +32,6 @@ export const appConfig: ApplicationConfig = {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
     }),
+    provideClientHydration(),
   ],
 };

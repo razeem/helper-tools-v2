@@ -27,7 +27,7 @@ test('editing a new-regime slab rate recomputes the tax end-to-end', async ({ pa
 });
 
 test('reset restores the shipped defaults', async ({ page }) => {
-  await page.goto('/dashboard');
+  await page.goto('/');
   await page.getByTestId('avatar-menu').click();
   await page.getByTestId('open-settings').click();
   await page.getByRole('tab', { name: 'Tax rules' }).click();
@@ -41,7 +41,7 @@ test('reset restores the shipped defaults', async ({ page }) => {
 });
 
 test('tax rules persist across a reload', async ({ page }) => {
-  await page.goto('/dashboard');
+  await page.goto('/');
   await page.getByTestId('avatar-menu').click();
   await page.getByTestId('open-settings').click();
   await page.getByRole('tab', { name: 'Tax rules' }).click();

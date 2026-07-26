@@ -14,6 +14,7 @@ import { PILLARS } from './app.routes';
 import { PreferencesStore } from './core/preferences/preferences-store';
 import { ProfileStore } from './core/profile/profile-store';
 import { FinanceWorkbookService } from './core/export/finance-workbook.service';
+import { SeoService } from './core/seo/seo.service';
 
 @Component({
   selector: 'app-root',
@@ -69,6 +70,9 @@ export class App {
 
   constructor() {
     inject(MatIconRegistry).setDefaultFontSetClass('material-symbols-rounded');
+    // Resolve per-route <title>/description/canonical/OG/robots/JSON-LD; runs during
+    // prerender so the tags bake into each route's static HTML.
+    inject(SeoService).init();
   }
 
   protected toggleSidebar(): void {

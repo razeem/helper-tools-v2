@@ -1,4 +1,4 @@
-// Minimal static file server for e2e: serves the production build in `dist/`
+// Minimal static file server for e2e: serves the prerendered build in `dist/browser`
 // with SPA fallback to index.html. Used instead of `ng serve` so tests run
 // against real, pre-built static chunks — no dev-server dependency optimization
 // or reloads, which made the lazy exceljs download flaky.
@@ -7,7 +7,8 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = fileURLToPath(new URL('../dist', import.meta.url));
+// Prerendered/SSG output lands in dist/browser (per-route index.html files).
+const root = fileURLToPath(new URL('../dist/browser', import.meta.url));
 const port = Number(process.env['PORT'] ?? 4300);
 
 const CONTENT_TYPES = {

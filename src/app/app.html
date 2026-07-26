@@ -11,7 +11,7 @@
     </button>
   }
 
-  <a class="brand" routerLink="/dashboard" aria-label="Personal Finance — home">
+  <a class="brand" routerLink="/" aria-label="Personal Finance — home">
     <span class="brand__mark" aria-hidden="true">
       <svg viewBox="0 0 64 64" width="34" height="34">
         <defs>
@@ -94,7 +94,7 @@
         @for (pillar of pillars; track pillar.path) {
           <a
             class="nav__item"
-            [routerLink]="['/', pillar.path]"
+            [routerLink]="pillar.path === 'dashboard' ? ['/'] : ['/', pillar.path]"
             routerLinkActive="nav__item--active"
             [routerLinkActiveOptions]="{ exact: pillar.path === 'dashboard' }"
             (click)="closeOnHandset()"

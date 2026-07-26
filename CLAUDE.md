@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 - `npm start` — dev server at `http://localhost:4200/`.
-- `npm run build` — production build → `dist/` (git-ignored). Base href `/`.
+- `npm run build` — production build → `dist/browser/` (git-ignored). Base href `/`. **Statically prerendered (SSG)** — see Deployment.
 - `npm run build:pages` — production build with `--base-href /personal-finance-dashboard/`, matching how CI builds for GitHub Pages (the site is served from that subpath; a plain `build` bakes in a `/` base href that breaks assets there). Useful for locally reproducing the deployed output.
 - `npm test` — Vitest unit tests (watch). Single run: `npx ng test --no-watch`. Filter: `npx ng test --no-watch --include='**/income-tax.model.spec.ts'` (pattern support depends on the builder; the pure-logic specs are the fast ones).
 - `npm run lint` — ESLint (flat config, `eslint.config.js`).
@@ -20,13 +20,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Deployment
 
-Deployment is a **GitHub Actions pipeline** (`.github/workflows/deploy.yml`), not committed build output. On push to `master` it runs three jobs: `verify` (lint + Vitest + Playwright e2e), `build` (`ng build --base-href "/<repo>/"`, base href derived from the repo name so it isn't hard-coded, + a `404.html` copy of `index.html` for SPA deep links), and `deploy` (uploads the `dist/` artifact and publishes via `actions/deploy-pages`). Build output (`dist/`) is git-ignored and never committed.
+Deployment is a **GitHub Actions pipeline** (`.github/workflows/deploy.yml`), not committed build output. On push to `master` it runs three jobs: `verify` (lint + Vitest + Playwright e2e), `build` (`ng build --base-href "/<repo>/"`, base href derived from the repo name so it isn't hard-coded, + a `404.html` copy of `dist/browser/index.html` as a fallback for genuinely unknown paths), and `deploy` (uploads the **`dist/browser`** artifact and publishes via `actions/deploy-pages`). Build output (`dist/`) is git-ignored and never committed.
 
 One-time repo setting: **Settings → Pages → Build and deployment → Source = "GitHub Actions"**. The site publishes to `https://<owner>.github.io/<repo>/`. `npm ci` requires `package-lock.json` to be committed.
 
+### Static prerendering (SSG) + SEO
+
+The app is **prerendered to static HTML at build time** via `@angular/ssr` — there is **no server runtime** (`outputMode: "static"` in `angular.json`, `server: src/main.server.ts`, and `app.routes.server.ts` renders every route with `RenderMode.Prerender`). This is what makes deep links like `/tax` return a real **HTTP 200** with content (each route emits its own `dist/browser/<route>/index.html`) instead of routing through the 404 fallback, and it lets crawlers/unfurlers see real HTML. GitHub Pages hosting is unchanged — it just serves the files. Output moved from a flat `dist/` to **`dist/browser/`** (SSR layout); the deploy workflow and `e2e/static-server.mjs` point there. `provideClientHydration()` in `app.config.ts` takes the static DOM over on the client, so IndexedDB, the SW and all client state behave exactly as before after hydration.
+
+**Browser-only APIs are platform-guarded** so the build-time render doesn't throw: `StorageService.bind()` short-circuits (keeps defaults, marks ready) when `!isPlatformBrowser`, and `PreferencesStore`'s theme `effect` skips its `document` write on the server. Export/transfer/QR/image code is user-action-only and never runs during prerender. The **dashboard is served at the root `''`** so the home page is real prerendered content at the canonical URL; `/dashboard` (and `/profile`, `**`) redirect to it.
+
+**Per-page metadata** is resolved at prerender time by `core/seo/seo.service.ts` (bootstrapped from `App`): on each `NavigationEnd` it reads the deepest route's `data.seo` (`{ description, index }` in `app.routes.ts`) and sets `<title>` (route `title`), description, canonical, OG/Twitter, `robots` (`noindex,follow` for non-indexed routes), and a `WebApplication` JSON-LD block for indexed pages — all baked into the served HTML. **Scope:** only the root `/` (dashboard), `/tax`, `/loan` are indexed (real standalone content); the five data-entry pillars (income/spending/saving/insurance/investing) are prerendered but `noindex` + excluded from the sitemap.
+
+**Crawlability:** `public/sitemap.xml` (the three indexed URLs) and `public/robots.txt` ship as static assets. ⚠️ Crawlers read `robots.txt` from the **host root** (`https://<owner>.github.io/robots.txt`), not the project subpath, so the subpath copy is advisory — the `noindex` meta tags are the authoritative signal for the private pillars. The host-authoritative copy (with the same `Disallow`s + a `Sitemap:` line pointing here) lives at the root of the separate `razeem.github.io` repo.
+
 ### PWA (installable + offline)
 
-The app is a **Progressive Web App** via `@angular/service-worker`. `provideServiceWorker('ngsw-worker.js', { enabled: !isDevMode() })` in `app.config.ts` registers the worker **only in production builds** (disabled under `ng serve`, so the Playwright dev server is unaffected). `ngsw-config.json` (referenced from `angular.json` `build > serviceWorker`) prefetches the app shell and lazily caches `public/**` + Google Fonts; `public/manifest.webmanifest` (linked from `index.html`, with Apple PWA metas) makes it installable. All manifest/SW paths are **relative** (`start_url`/`scope` = `.`) so they stay valid under the GitHub Pages subpath — `ngsw.json`'s `index` is emitted with the base-href prefix automatically. Icons: `favicon.svg` + `icon-192.png` + `icon-512.png` (the 512 doubles as the maskable icon). Offline needs no app code — data already lives in IndexedDB; the SW just caches the shell. The deploy workflow needs no changes (SW + manifest ship in `dist/`).
+The app is a **Progressive Web App** via `@angular/service-worker`. `provideServiceWorker('ngsw-worker.js', { enabled: !isDevMode() })` in `app.config.ts` registers the worker **only in production builds** (disabled under `ng serve`, so the Playwright dev server is unaffected). `ngsw-config.json` (referenced from `angular.json` `build > serviceWorker`) prefetches the app shell and lazily caches `public/**` + Google Fonts; `public/manifest.webmanifest` (linked from `index.html`, with Apple PWA metas) makes it installable. All manifest/SW paths are **relative** (`start_url`/`scope` = `.`) so they stay valid under the GitHub Pages subpath — `ngsw.json`'s `index` is emitted with the base-href prefix automatically. Icons: `favicon.svg` + `icon-192.png` + `icon-512.png` (the 512 doubles as the maskable icon). Offline needs no app code — data already lives in IndexedDB; the SW just caches the shell. The deploy workflow needs no changes (SW + manifest ship in `dist/browser/`).
 
 ## Architecture
 

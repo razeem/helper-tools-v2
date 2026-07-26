@@ -43,14 +43,16 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: Build (base href derived from the repo name)
+      - name: Build (prerendered/SSG; base href derived from the repo name)
         run: npm run build -- --base-href "/${{ github.event.repository.name }}/"
-      - name: SPA deep-link fallback
-        run: cp dist/index.html dist/404.html
+      - name: SPA fallback for genuinely unknown paths
+        # Prerendered routes now have their own index.html (HTTP 200); this only
+        # catches unknown URLs, redirecting them into the app like the router's ** route.
+        run: cp dist/browser/index.html dist/browser/404.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./dist/browser
 
   # ---- Deploy the artifact to GitHub Pages ----
   deploy:

@@ -1,0 +1,15 @@
+# Personal Finance dashboard — GitHub Pages project site.
+# NOTE: crawlers read robots.txt from the host root (https://razeem.github.io/robots.txt),
+# so this subpath copy is advisory. The private pillars below are also served with a
+# <meta name="robots" content="noindex,follow"> tag, which is the authoritative signal.
+User-agent: *
+Allow: /
+
+# Private data-entry pillars — prerendered for deep links, but not for indexing.
+Disallow: /personal-finance-dashboard/income/
+Disallow: /personal-finance-dashboard/spending/
+Disallow: /personal-finance-dashboard/saving/
+Disallow: /personal-finance-dashboard/insurance/
+Disallow: /personal-finance-dashboard/investing/
+
+Sitemap: https://razeem.github.io/personal-finance-dashboard/sitemap.xml
