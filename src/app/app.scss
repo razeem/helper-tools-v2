@@ -12,11 +12,11 @@
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  // Fixed bar: never let the flex column shrink it below 96px on content-heavy
-  // pages (e.g. the dashboard), which otherwise squeezed it inconsistently.
+  // Fixed bar: never let the flex column shrink it on content-heavy pages
+  // (e.g. the dashboard), which otherwise squeezed it inconsistently.
   flex: none;
-  height: 96px;
-  min-height: 96px;
+  height: 64px;
+  min-height: 64px;
   padding: 0 2rem;
   background: var(--nav-bg);
   backdrop-filter: blur(14px);
@@ -90,8 +90,7 @@
   }
 }
 
-/* Global "Export" action in the top bar — the primary gradient, with generous
-   vertical padding so it breathes inside the taller bar. */
+/* Global "Export" action in the top bar — the primary gradient pill. */
 .topbar__export {
   display: inline-flex;
   align-items: center;
