@@ -59,13 +59,16 @@ export class TransferError extends Error {
  * Collections this build knows how to consume, with their current document
  * versions. KEEP IN SYNC with each store's `bind({ version })`:
  * `FinanceStore` (finance), `ProfileStore` (profile), `TaxConfigStore`
- * (tax-config), `PreferencesStore` (preferences).
+ * (tax-config), `AssumptionsStore` (assumptions), `PreferencesStore`
+ * (preferences) — a version *lower* than the store's marks incoming documents
+ * `newer-unsupported`, which silently skips them on import.
  */
 export const KNOWN_COLLECTIONS: Record<string, { label: string; version: number }> = {
   finance: { label: 'Finance', version: 5 },
   profile: { label: 'Profile', version: 1 },
   'tax-config': { label: 'Tax rules', version: 1 },
-  preferences: { label: 'Preferences', version: 1 },
+  assumptions: { label: 'Assumptions', version: 1 },
+  preferences: { label: 'Preferences', version: 2 },
 };
 
 export type CollectionStatus = 'ok' | 'will-migrate' | 'newer-unsupported' | 'unknown';
@@ -96,7 +99,10 @@ export interface TransferSummary {
 // --- Public API -----------------------------------------------------------
 
 /** Serialise a payload to a compact, copy-safe string. */
-export async function encode(payload: TransferPayload, options: EncodeOptions = {}): Promise<string> {
+export async function encode(
+  payload: TransferPayload,
+  options: EncodeOptions = {},
+): Promise<string> {
   const includeBlobs = options.includeBlobs ?? true;
   const serialisable = {
     ...payload,
@@ -200,6 +206,10 @@ function describe(key: string, data: unknown): string {
     }
     case 'tax-config':
       return 'tax slabs & deductions';
+    case 'assumptions': {
+      const rate = typeof data['inflationRatePct'] === 'number' ? data['inflationRatePct'] : 0;
+      return `inflation: ${rate}%`;
+    }
     case 'preferences': {
       const theme = typeof data['theme'] === 'string' ? data['theme'] : 'system';
       return `theme: ${theme}`;
@@ -226,7 +236,9 @@ async function deepEncodeBlobs(value: unknown, includeBlobs: boolean): Promise<u
   }
   if (isRecord(value)) {
     const entries = await Promise.all(
-      Object.entries(value).map(async ([k, v]) => [k, await deepEncodeBlobs(v, includeBlobs)] as const),
+      Object.entries(value).map(
+        async ([k, v]) => [k, await deepEncodeBlobs(v, includeBlobs)] as const,
+      ),
     );
     return Object.fromEntries(entries);
   }
@@ -245,7 +257,9 @@ function deepDecodeBlobs(value: unknown): unknown {
 }
 
 function isBlobSentinel(value: unknown): value is BlobSentinel {
-  return isRecord(value) && typeof value['__blob__'] === 'string' && typeof value['type'] === 'string';
+  return (
+    isRecord(value) && typeof value['__blob__'] === 'string' && typeof value['type'] === 'string'
+  );
 }
 
 // --- gzip via the platform Compression Streams -----------------------------

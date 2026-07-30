@@ -49,8 +49,11 @@ src/app/
   app.ts / .html / .scss shell: toolbar (avatar menu + theme) + collapsible mat-sidenav + <router-outlet>
   core/
     finance/   finance.model.ts (types + pure deriveFinance), tax.model.ts (old/new regime, data-driven TaxConfig),
+               emi.model.ts (pure EMI + amortization), inflation.model.ts (pure future-cost / present-value),
+               nps.model.ts (pure NPS corpus → lumpsum + pension, incl. today's-money figures),
                finance-store.ts (THE shared model — one binding, derived signals),
-               tax-config-store.ts (user-editable tax rulebook; FinanceStore reads it)
+               tax-config-store.ts (user-editable tax rulebook; FinanceStore reads it),
+               assumptions-store.ts (user-editable inflation assumption; the calculators read it)
     profile/   profile.model.ts, profile-store.ts (shared: form + shell avatar)
     preferences/ preferences-store.ts (sidebar collapsed + theme)
     storage/   db.ts (idb schema + structural migrations), storage.service.ts (persistence API)
@@ -58,10 +61,10 @@ src/app/
                finance-workbook.service.ts (whole-model .xlsx — the Dashboard "Export workbook")
     image/     image-compression.ts (canvas → WebP Blob)
   shared/ui/   stat-tile, section-card, pillar-card, coming-soon, line-item-list,
-               inline-prompt, rating-input, page-header
+               inline-prompt, rating-input, page-header, slider-field (calculator input: chip + slider)
   features/
     dashboard/  income/  spending/  saving/  loan/  insurance/  investing/  tax/
-    settings/ (profile-form + tax-rules-form + settings-dialog)
+    settings/ (profile-form + tax-rules-form + assumptions-form + settings-dialog)
     coming-soon-page/  (the placeholder for any `status: 'soon'` pillar — currently NONE; all 8 pillars are active)
 ```
 
@@ -117,12 +120,12 @@ Every stored record is wrapped in a `StoredEnvelope` (`{ version, data, updatedA
 `FinanceStore` (`core/finance/finance-store.ts`) is the **single shared state** for the whole app. Every value is entered **exactly once**, in the pillar that owns it; every other pillar reads derived numbers — nothing is re-typed.
 
 - **Monthly by default**: income, spending, savings, insurance and investing are all entered **MONTHLY**. India tax is yearly, so `deriveFinance` annualises for the tax model and divides the annual tax back to a monthly figure — every budget number it returns (net, minimum, surplus, allocation) is monthly. `gross` is the _typical_ monthly base; **`annualGross`** is the actual sum of the **12-month salary breakdown** (`income.months`, Apr→Mar, each `{ base, bonus }`) — the tax basis. `setGross` **smart-fills** the breakdown (months still matching the old gross follow the new one; genuine overrides are kept).
-- **Ownership**: Income owns `gross`, `shortTermSavings`, the 12-month breakdown, goals, ideas; Spending owns `needs[]`/`wants[]`; **Insurance** owns `premiums[]` (per-item `period: monthly|yearly`, yearly ÷12); **Investing** owns `contributions[]` (per-item `mandatory` → EPF/NPS bucket under Living); Tax owns `regime` + deductions. Loan/Saving stay Coming-soon. `LineItem` carries optional `period` and `mandatory`; `sumLineItemsMonthly` is period-aware.
+- **Ownership**: Income owns `gross`, `shortTermSavings`, the 12-month breakdown, goals, ideas; Spending owns `needs[]`/`wants[]`; **Insurance** owns `premiums[]` (per-item `period: monthly|yearly`, yearly ÷12); **Investing** owns `mandatory[]` (EPF/NPS, bucketed under Living) + `voluntary[]` (Growth & Freedom); **Loan** owns `emis[]`; **Saving** owns `emergencyMultiplier`; Tax owns `regime` + deductions. `LineItem` carries optional `period` and `mandatory`; `sumLineItemsMonthly` is period-aware.
 - **Derived** (`deriveFinance`, pure + unit-tested): `totalNeeds` (spending **+ loan EMIs**), `totalWants`, `annualGross`, `taxAnnual`, monthly `taxPayable`, `netIncome`, `minimumIncome`, `surplus`, and the **spend-allocation** buckets `allocation.{living,safety,growthFreedom,total}` (Living = needs+wants+mandatory investments; Safety = insurance+savings; Growth&Freedom = discretionary investments).
 - **Spend allocation** (dashboard card): a draggable two-handle split bar sets the target ratio (default **75:15:10**, always sums 100 by construction — stored as `allocationTarget`), compared against actuals per bucket. `FinanceStore.setAllocationTarget`.
 - **Circular dependency** (Gross → Tax → Minimum): resolved by making **Gross the only entered value**; Tax and Minimum Income are both derived. Never back-solve gross from minimum.
 - **Minimum Income formula** is implemented literally (`Needs + Wants + Savings + Insurance + Investments − Tax`, monthly) in one place in `deriveFinance`.
-- **Persistence/migrations**: the `finance` doc is at **version 3** (`FinanceStore.bind`) — v1→v2 seeded the 12-month breakdown, v2→v3 the allocation target. Bump + extend `migrate` when the shape changes.
+- **Persistence/migrations**: the `finance` doc is at **version 5** (`FinanceStore.bind`) — v1→v2 seeded the 12-month breakdown, v2→v3 the allocation target, v3→v4 split `investing.contributions` into `mandatory`/`voluntary`, v4→v5 seeded the Saving pillar's emergency multiplier. Bump + extend `migrate` when the shape changes, and keep `KNOWN_COLLECTIONS` in `core/transfer/transfer.model.ts` in step (a stale version there makes exported documents look `newer-unsupported` and silently skips them on import).
 - **Global export** lives in the **top bar** (`App.exportWorkbook`, `data-testid="dashboard-export"`), not the Dashboard body.
 - **Inline prompts**: when a pillar needs a value another owns but it's still empty, render `app-inline-prompt` linking to the owning pillar instead of a duplicate input.
 
@@ -130,7 +133,22 @@ Tax math lives in `core/finance/tax.model.ts` — pure `calculateOldRegimeTax` /
 
 The config is **user-editable**: `TaxConfigStore` (`core/finance/tax-config-store.ts`, `providedIn:'root'`) binds a `tax-config` collection and exposes setters for slabs (add/remove/edit), standard deduction, rebate limit/amount, cess, and 80C/80D caps, plus `reset()` (restore shipped defaults). `FinanceStore.derived` reads `taxConfig.config()` so the **whole app recomputes** when rules change. The editor is the **"Tax rules" tab** in the Settings dialog (`features/settings/tax-rules-form.ts`). To update the shipped baseline for a new FY, edit `DEFAULT_TAX_CONFIG` in one place.
 
-**In-page tabs are deep-linkable**: Income (`?tab=minimum|goals|ideas`) and Tax (`?tab=calculator|comparer`) sync a `?tab=` query param to the `mat-tab-group` `selectedIndex` (via `toSignal(route.queryParamMap)` + `router.navigate(..., { replaceUrl: true })`). A query param (not a fragment or child routes) keeps tab components mounted so local state — e.g. the ICER sort snapshot — survives tab switches. The **ICER table sorts on a one-shot snapshot** (`order` signal set on header click), never a live `computed`, so editing a rating never reorders rows mid-edit.
+## Calculators (Loan · Investing)
+
+Alongside the declaration pillars there are three **scratchpad calculators**. They share one shape: pure model in `core/finance/`, sliders on the left via `app-slider-field`, headline figures on the right, a schedule/forecast table below. Their inputs are **local signals, deliberately not persisted** — a calculator is a scratchpad — with two exceptions that are shared state (below).
+
+- **EMI calculator** (`features/loan/emi-calculator.ts`, `?tab=calculator`) → `emi.model.ts`.
+- **Inflation Adjuster** (`features/investing/inflation-adjuster.ts`, `?tab=inflation`) → `inflation.model.ts`: pure `inflate` (future cost), `presentValue` (today's worth), `erosionPct`, and `projectInflation` which returns one row per year (`0…years`, inclusive) so the UI can index the **selected target year** out of a 40-year horizon and highlight it in the forecast table.
+- **NPS calculator** (`features/investing/nps-calculator.ts`, `?tab=nps`) → `nps.model.ts`: monthly contribution compounded to retirement (contribution at the **start** of each month, annuity-due), then split into annuity corpus (≥ `MIN_ANNUITY_SHARE_PCT` = 40% by NPS rules) and lumpsum, with `monthlyPension = annuityCorpus × annuityRate ÷ 12`. Every headline figure also comes back in **today's money** under `result.real` (discounted via `inflation.model`) — that's the "₹68L at 60 ≈ ₹12L today" answer.
+
+**The two automated fields** (nothing is typed twice):
+
+1. **Inflation rate** is _not_ a scratch input — it's the app-wide assumption in `AssumptionsStore` (`core/finance/assumptions-store.ts`, `assumptions` collection v1, default **6%**, bounds in `INFLATION_RANGE`). Both calculators read *and write* it, and it's editable in the **"Assumptions" tab** of the Settings dialog (`features/settings/assumptions-form.ts`); every real-terms figure recomputes live. Same idea as `TaxConfigStore`: shipped baseline + `reset()`.
+2. **NPS monthly contribution** is seeded from the shared model — any Investing line item whose name matches `/\bnps\b/i` (mandatory or voluntary, period-aware via `sumLineItemsMonthly`). The seed runs once through a self-destroying `effect` guarded on `FinanceStore.ready()`; after that the slider is scratch, and a **"Use that"** button re-syncs.
+
+Slider/donut styling is shared, not per-component: the `.app-slider` and `.app-donut-seg` utilities in `styles.scss` (global, so no `::ng-deep` needed).
+
+**In-page tabs are deep-linkable**: Income (`?tab=minimum|goals|ideas`), Tax (`?tab=calculator|comparer`), Loan (`?tab=loans|calculator`) and Investing (`?tab=contributions|inflation|nps`) sync a `?tab=` query param to the `mat-tab-group` `selectedIndex` (via `toSignal(route.queryParamMap)` + `router.navigate(..., { replaceUrl: true })`). A query param (not a fragment or child routes) keeps tab components mounted so local state — e.g. the ICER sort snapshot — survives tab switches. The **ICER table sorts on a one-shot snapshot** (`order` signal set on header click), never a live `computed`, so editing a rating never reorders rows mid-edit.
 
 ## Cross-device data transfer (export / import)
 

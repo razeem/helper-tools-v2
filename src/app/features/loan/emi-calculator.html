@@ -28,7 +28,7 @@
             [min]="PRINCIPAL.min"
             [max]="PRINCIPAL.max"
             [step]="PRINCIPAL.step"
-            class="emi-slider"
+            class="app-slider"
           >
             <input
               matSliderThumb
@@ -60,7 +60,7 @@
               <span class="opacity-70">%</span>
             </div>
           </div>
-          <mat-slider [min]="RATE.min" [max]="RATE.max" [step]="RATE.step" class="emi-slider">
+          <mat-slider [min]="RATE.min" [max]="RATE.max" [step]="RATE.step" class="app-slider">
             <input
               matSliderThumb
               [ngModel]="annualRatePct()"
@@ -91,7 +91,7 @@
               <span class="opacity-70">yr</span>
             </div>
           </div>
-          <mat-slider [min]="TENURE.min" [max]="TENURE.max" [step]="TENURE.step" class="emi-slider">
+          <mat-slider [min]="TENURE.min" [max]="TENURE.max" [step]="TENURE.step" class="app-slider">
             <input
               matSliderThumb
               [ngModel]="tenureYears()"
@@ -106,7 +106,7 @@
       <div class="flex items-center gap-5 rounded-xl p-4 bg-[var(--mat-sys-surface-container)]">
         <svg viewBox="0 0 100 100" class="w-32 h-32 shrink-0 -rotate-90" aria-hidden="true">
           <circle
-            class="donut-seg"
+            class="app-donut-seg"
             cx="50"
             cy="50"
             r="42"
@@ -116,7 +116,7 @@
             [attr.stroke-dasharray]="donut().loanLen + ' ' + (donut().c - donut().loanLen)"
           />
           <circle
-            class="donut-seg"
+            class="app-donut-seg"
             cx="50"
             cy="50"
             r="42"

@@ -1,0 +1,302 @@
+<div class="flex flex-col gap-5 pt-5">
+  <!-- Inputs · projection -->
+  <app-section-card
+    title="NPS Calculator"
+    icon="calculate"
+    subtitle="Project your NPS corpus, the lumpsum you can withdraw and the monthly pension the annuity pays. NPS rules require at least 40% of the corpus to buy the annuity."
+  >
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6 items-start">
+      <!-- Left: inputs -->
+      <div class="flex flex-col gap-5">
+        <app-slider-field
+          label="Monthly contribution"
+          prefix="₹"
+          [(value)]="monthlyContribution"
+          [min]="CONTRIBUTION.min"
+          [max]="CONTRIBUTION.max"
+          [step]="CONTRIBUTION.step"
+          [chars]="8"
+          testid="nps-contribution"
+        />
+        @if (declaredNps() > 0) {
+          <p class="-mt-3 text-xs text-[var(--mat-sys-on-surface-variant)]">
+            You declare
+            <strong class="app-num">{{ declaredNps() | inr }}</strong
+            >/month of NPS under Contributions.
+            <button
+              type="button"
+              class="underline font-semibold text-[var(--mat-sys-primary)]"
+              (click)="useDeclared()"
+              data-testid="nps-use-declared"
+            >
+              Use that
+            </button>
+          </p>
+        } @else {
+          <p class="-mt-3 text-xs text-[var(--mat-sys-on-surface-variant)]">
+            Tip: add an “NPS” line item under Contributions and this fills in automatically.
+          </p>
+        }
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <app-slider-field
+            label="Current age"
+            suffix="yr"
+            [(value)]="currentAge"
+            [min]="CURRENT_AGE.min"
+            [max]="CURRENT_AGE.max"
+            [step]="CURRENT_AGE.step"
+            [chars]="4"
+            testid="nps-current-age"
+          />
+          <app-slider-field
+            label="Retirement age"
+            suffix="yr"
+            [(value)]="retirementAge"
+            [min]="RETIREMENT_AGE.min"
+            [max]="RETIREMENT_AGE.max"
+            [step]="RETIREMENT_AGE.step"
+            [chars]="4"
+            testid="nps-retirement-age"
+          />
+        </div>
+
+        <app-slider-field
+          label="Expected return (p.a)"
+          suffix="%"
+          [(value)]="expectedReturnPct"
+          [min]="RETURN.min"
+          [max]="RETURN.max"
+          [step]="RETURN.step"
+          [chars]="5"
+          testid="nps-return"
+        />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <app-slider-field
+            label="Annuity share"
+            suffix="%"
+            [(value)]="annuitySharePct"
+            [min]="ANNUITY_SHARE.min"
+            [max]="ANNUITY_SHARE.max"
+            [step]="ANNUITY_SHARE.step"
+            [chars]="5"
+            [hint]="'Minimum ' + MIN_ANNUITY_SHARE_PCT + '% by NPS rules'"
+            testid="nps-annuity-share"
+          />
+          <app-slider-field
+            label="Annuity rate (p.a)"
+            suffix="%"
+            [(value)]="annuityRatePct"
+            [min]="ANNUITY_RATE.min"
+            [max]="ANNUITY_RATE.max"
+            [step]="ANNUITY_RATE.step"
+            [chars]="5"
+            hint="What the annuity pays out each year"
+            testid="nps-annuity-rate"
+          />
+        </div>
+
+        <app-slider-field
+          label="Inflation rate (p.a)"
+          suffix="%"
+          [value]="inflationRatePct()"
+          (valueChange)="setInflationRate($event)"
+          [min]="RATE.min"
+          [max]="RATE.max"
+          [step]="RATE.step"
+          [chars]="5"
+          hint="App-wide assumption (Settings → Assumptions) — drives the today's-money figures below."
+          testid="nps-inflation-rate"
+        />
+      </div>
+
+      <!-- Right: donut + amounts -->
+      <div class="flex items-center gap-5 rounded-xl p-4 bg-[var(--mat-sys-surface-container)]">
+        <svg viewBox="0 0 100 100" class="w-32 h-32 shrink-0 -rotate-90" aria-hidden="true">
+          <circle
+            class="app-donut-seg"
+            cx="50"
+            cy="50"
+            r="42"
+            fill="none"
+            stroke="var(--mat-sys-primary-container)"
+            stroke-width="14"
+            [attr.stroke-dasharray]="donut().investedLen + ' ' + (donut().c - donut().investedLen)"
+          />
+          <circle
+            class="app-donut-seg"
+            cx="50"
+            cy="50"
+            r="42"
+            fill="none"
+            stroke="var(--mat-sys-primary)"
+            stroke-width="14"
+            [attr.stroke-dasharray]="donut().growthLen + ' ' + (donut().c - donut().growthLen)"
+            [attr.stroke-dashoffset]="-donut().investedLen"
+          />
+        </svg>
+
+        <dl class="flex-1 m-0 text-sm">
+          <div
+            class="flex items-center justify-between gap-3 py-2 border-b border-[var(--mat-sys-outline-variant)]"
+          >
+            <dt class="font-medium">Corpus at {{ retirementAge() }}</dt>
+            <dd class="m-0 text-base font-bold app-num" data-testid="nps-corpus">
+              {{ result().corpus | inr }}
+            </dd>
+          </div>
+          <div
+            class="flex items-center justify-between gap-3 py-2 border-b border-[var(--mat-sys-outline-variant)]"
+          >
+            <dt class="flex items-center gap-2 font-medium">
+              <span
+                class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--mat-sys-primary-container)]"
+              ></span>
+              Total invested
+            </dt>
+            <dd class="m-0 font-semibold app-num" data-testid="nps-invested">
+              {{ result().totalInvested | inr }}
+            </dd>
+          </div>
+          <div
+            class="flex items-center justify-between gap-3 py-2 border-b border-[var(--mat-sys-outline-variant)]"
+          >
+            <dt class="flex items-center gap-2 font-medium">
+              <span
+                class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--mat-sys-primary)]"
+              ></span>
+              Returns earned
+            </dt>
+            <dd class="m-0 font-semibold app-num" data-testid="nps-growth">
+              {{ result().totalGrowth | inr }}
+            </dd>
+          </div>
+          <div
+            class="flex items-center justify-between gap-3 py-2 border-b border-[var(--mat-sys-outline-variant)]"
+          >
+            <dt class="font-medium">
+              Lumpsum <span class="opacity-70">({{ 100 - result().annuitySharePct }}%)</span>
+            </dt>
+            <dd class="m-0 font-semibold app-num" data-testid="nps-lumpsum">
+              {{ result().lumpsum | inr }}
+            </dd>
+          </div>
+          <div class="flex items-center justify-between gap-3 py-2">
+            <dt class="font-medium">Monthly pension</dt>
+            <dd class="m-0 font-semibold app-num" data-testid="nps-pension">
+              {{ result().monthlyPension | inr }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </app-section-card>
+
+  <!-- The automated inflation-adjusted view of the payout -->
+  <app-section-card
+    title="What it's worth in today's money"
+    eyebrow="Automated · inflation {{ inflationRatePct() }}%"
+    icon="trending_down"
+    [subtitle]="
+      'Discounted over ' +
+      result().years +
+      ' years at ' +
+      inflationRatePct() +
+      '% a year — the same assumption the Inflation Adjuster uses.'
+    "
+  >
+    @if (hasResult()) {
+      <p class="m-0 mb-4 text-sm leading-relaxed" data-testid="nps-real-verdict">
+        A <strong class="app-num">{{ result().lumpsum | inr }}</strong> lumpsum at
+        {{ retirementAge() }} would buy about what
+        <strong class="app-num">{{ result().real.lumpsum | inr }}</strong> buys today, and the
+        <strong class="app-num">{{ result().monthlyPension | inr }}</strong
+        >/month pension would feel like
+        <strong class="app-num">{{ result().real.monthlyPension | inr }}</strong
+        >/month — {{ result().real.erosionPct | number: '1.0-1' }}% of the value is eaten by
+        inflation.
+      </p>
+
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
+        <app-stat-tile
+          label="Lumpsum today"
+          [value]="result().real.lumpsum | inr"
+          [hint]="'nominal ' + (result().lumpsum | inr)"
+          icon="payments"
+          tone="accent"
+          data-testid="nps-real-lumpsum"
+        />
+        <app-stat-tile
+          label="Pension today"
+          [value]="result().real.monthlyPension | inr"
+          [hint]="'nominal ' + (result().monthlyPension | inr) + ' / month'"
+          icon="elderly"
+          data-testid="nps-real-pension"
+        />
+        <app-stat-tile
+          label="Corpus today"
+          [value]="result().real.corpus | inr"
+          [hint]="'nominal ' + (result().corpus | inr)"
+          icon="account_balance_wallet"
+          data-testid="nps-real-corpus"
+        />
+        <app-stat-tile
+          label="Value lost"
+          [value]="(result().real.erosionPct | number: '1.0-1') + '%'"
+          [hint]="'over ' + result().years + ' years'"
+          icon="trending_down"
+          tone="negative"
+          data-testid="nps-real-erosion"
+        />
+      </div>
+    } @else {
+      <p class="m-0 text-sm text-[var(--mat-sys-on-surface-variant)]">
+        Set a contribution and a retirement age above the current age to see the projection.
+      </p>
+    }
+  </app-section-card>
+
+  <!-- Year-by-year accumulation -->
+  @if (hasResult()) {
+    <app-section-card
+      title="Year by year"
+      icon="table_chart"
+      subtitle="How the corpus builds — and what each year's balance would be worth in today's money."
+    >
+      <div class="max-h-96 overflow-auto -mx-1 px-1">
+        <table class="w-full text-sm border-collapse">
+          <thead
+            class="sticky top-0 z-10 bg-[var(--mat-sys-surface-container)] text-[var(--mat-sys-on-surface-variant)]"
+          >
+            <tr class="text-xs uppercase tracking-wider">
+              <th class="text-left py-2 px-2 font-bold">Year</th>
+              <th class="text-right py-2 px-2 font-bold">Age</th>
+              <th class="text-right py-2 px-2 font-bold">Invested</th>
+              <th class="text-right py-2 px-2 font-bold">Returns</th>
+              <th class="text-right py-2 px-2 font-bold">Balance</th>
+              <th class="text-right py-2 px-2 font-bold">Balance today</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (y of result().schedule; track y.year) {
+              <tr
+                class="border-t border-[var(--mat-sys-outline-variant)]"
+                [attr.data-testid]="'nps-year-' + y.year"
+              >
+                <td class="py-1.5 px-2 app-num">{{ y.year }}</td>
+                <td class="py-1.5 px-2 text-right app-num">{{ y.age }}</td>
+                <td class="py-1.5 px-2 text-right app-num">{{ y.contributed | inr }}</td>
+                <td class="py-1.5 px-2 text-right app-num">{{ y.growth | inr }}</td>
+                <td class="py-1.5 px-2 text-right app-num">{{ y.closingBalance | inr }}</td>
+                <td class="py-1.5 px-2 text-right app-num opacity-80">
+                  {{ y.closingBalanceReal | inr }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-section-card>
+  }
+</div>

@@ -190,6 +190,38 @@ body::before {
   letter-spacing: -0.01em;
 }
 
+// Calculator sliders (EMI, inflation, NPS): span the full width of their parent
+// + a higher-contrast track/handle in both themes.
+//
+// The `mat-slider` element qualifier is load-bearing: Material's own slider
+// styles are injected at runtime (so they come *after* this stylesheet) and its
+// `.mat-mdc-slider` host rule leaves the slider `display: inline-block` at its
+// intrinsic ~120px. A bare `.app-slider` class ties on specificity and loses on
+// order; element + class (0,1,1) wins. The --mat-slider-* tokens then cascade
+// into the internals.
+mat-slider.app-slider {
+  width: 100%;
+  margin: 0;
+  --mat-slider-active-track-height: 6px;
+  --mat-slider-inactive-track-height: 6px;
+  --mat-slider-handle-width: 22px;
+  --mat-slider-handle-height: 22px;
+  --mat-slider-inactive-track-color: var(--mat-sys-outline);
+
+  // The inactive track's 0.24 opacity is hardcoded in Material — lift it so the
+  // unfilled remainder is clearly visible against the card.
+  .mdc-slider__track--inactive {
+    opacity: 0.55;
+  }
+}
+
+// Donut ring segments: ease the arcs as amounts change on the fly.
+.app-donut-seg {
+  transition:
+    stroke-dasharray 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 // Render Material Symbols crisply at the sizes we use.
 .mat-icon {
   font-variation-settings: 'opsz' 24;

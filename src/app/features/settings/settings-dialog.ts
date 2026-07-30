@@ -11,6 +11,7 @@ import {
 } from '../../core/preferences/preferences-store';
 import { ProfileForm } from './profile-form';
 import { TaxRulesForm } from './tax-rules-form';
+import { AssumptionsForm } from './assumptions-form';
 import { DataTransfer } from './data-transfer';
 
 @Component({
@@ -24,6 +25,7 @@ import { DataTransfer } from './data-transfer';
     MatIconModule,
     ProfileForm,
     TaxRulesForm,
+    AssumptionsForm,
     DataTransfer,
   ],
   template: `
@@ -44,6 +46,11 @@ import { DataTransfer } from './data-transfer';
         <mat-tab label="Tax rules">
           <div class="pane">
             <app-tax-rules-form />
+          </div>
+        </mat-tab>
+        <mat-tab label="Assumptions">
+          <div class="pane">
+            <app-assumptions-form />
           </div>
         </mat-tab>
         <mat-tab label="Preferences">

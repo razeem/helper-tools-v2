@@ -1,0 +1,152 @@
+<div class="flex flex-col gap-5 pt-5">
+  <app-section-card
+    title="Inflation Adjuster"
+    icon="trending_down"
+    subtitle="What today's money will cost later — and what a future amount is really worth now. The rate is your app-wide assumption (Settings → Assumptions); the NPS calculator uses the same one."
+  >
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6 items-center">
+      <!-- Left: inputs -->
+      <div class="flex flex-col gap-5">
+        <app-slider-field
+          label="Amount (today's money)"
+          prefix="₹"
+          [(value)]="amount"
+          [min]="AMOUNT.min"
+          [max]="AMOUNT.max"
+          [step]="AMOUNT.step"
+          [chars]="9"
+          testid="inflation-amount"
+        />
+
+        <app-slider-field
+          label="Target year"
+          [(value)]="targetYear"
+          [min]="YEAR.min"
+          [max]="YEAR.max"
+          [step]="YEAR.step"
+          [chars]="6"
+          [hint]="yearsAhead() + ' years from now'"
+          testid="inflation-year"
+        />
+
+        <app-slider-field
+          label="Inflation rate (p.a)"
+          suffix="%"
+          [value]="rate()"
+          (valueChange)="setRate($event)"
+          [min]="RATE.min"
+          [max]="RATE.max"
+          [step]="RATE.step"
+          [chars]="5"
+          hint="Saved as your app-wide assumption — shared with the NPS calculator."
+          testid="inflation-rate"
+        />
+      </div>
+
+      <!-- Right: the selected year's verdict -->
+      <div class="flex flex-col gap-4 rounded-xl p-4 bg-[var(--mat-sys-surface-container)]">
+        <p class="m-0 text-sm leading-relaxed" data-testid="inflation-verdict">
+          <strong class="app-num">{{ amount() | inr }}</strong> received in
+          <strong>{{ targetYear() }}</strong> would be worth about
+          <strong class="app-num">{{ selected().presentValue | inr }}</strong> in today's money —
+          and something costing {{ amount() | inr }} today would cost
+          <strong class="app-num">{{ selected().futureCost | inr }}</strong> by then.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <app-stat-tile
+            label="Worth today"
+            [value]="selected().presentValue | inr"
+            [hint]="'if received in ' + targetYear()"
+            icon="south_east"
+            tone="accent"
+            data-testid="inflation-present-value"
+          />
+          <app-stat-tile
+            label="Cost in {{ targetYear() }}"
+            [value]="selected().futureCost | inr"
+            [hint]="'×' + (selectedFactor() | number: '1.2-2') + ' today’s price'"
+            icon="north_east"
+            data-testid="inflation-future-cost"
+          />
+        </div>
+
+        <!-- Purchasing power remaining -->
+        <div>
+          <div class="flex items-center justify-between gap-3 mb-1 text-sm">
+            <span class="font-medium">Purchasing power left</span>
+            <span class="font-semibold app-num" data-testid="inflation-power-left">
+              {{ powerLeftPct() | number: '1.0-1' }}%
+            </span>
+          </div>
+          <div
+            class="h-2.5 rounded-full overflow-hidden bg-[var(--mat-sys-surface-container-highest)]"
+          >
+            <div
+              class="h-full rounded-full bg-[var(--mat-sys-primary)] transition-[width] duration-500"
+              [style.width.%]="powerLeftPct()"
+            ></div>
+          </div>
+          <p class="mt-1 text-xs text-[var(--mat-sys-on-surface-variant)]">
+            <span data-testid="inflation-erosion"
+              >{{ selected().erosionPct | number: '1.0-1' }}%</span
+            >
+            of today's value is lost by {{ targetYear() }} at {{ rate() }}% a year. You'd need
+            <strong class="app-num">{{ selected().futureCost - amount() | inr }}</strong> more to
+            buy the same thing.
+          </p>
+        </div>
+      </div>
+    </div>
+  </app-section-card>
+
+  <!-- Year-by-year forecast, selected year highlighted -->
+  <app-section-card
+    title="Inflation forecast"
+    icon="table_chart"
+    [subtitle]="
+      'Every year to ' + YEAR.max + ' at ' + rate() + '% a year. Your selected year is highlighted.'
+    "
+  >
+    <div class="max-h-96 overflow-auto -mx-1 px-1">
+      <table class="w-full text-sm border-collapse">
+        <thead
+          class="sticky top-0 z-10 bg-[var(--mat-sys-surface-container)] text-[var(--mat-sys-on-surface-variant)]"
+        >
+          <tr class="text-xs font-bold uppercase tracking-wider">
+            <th class="text-left py-2 px-2 font-bold">Year</th>
+            <th class="text-right py-2 px-2 font-bold">In</th>
+            <th class="text-right py-2 px-2 font-bold">Cost then</th>
+            <th class="text-right py-2 px-2 font-bold">Worth today</th>
+            <th class="text-right py-2 px-2 font-bold">Power lost</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of forecast().rows; track row.year) {
+            <tr
+              class="border-t border-[var(--mat-sys-outline-variant)]"
+              [class.font-semibold]="row.year === yearsAhead()"
+              [style.background]="
+                row.year === yearsAhead() ? 'var(--mat-sys-primary-container)' : null
+              "
+              [style.color]="
+                row.year === yearsAhead() ? 'var(--mat-sys-on-primary-container)' : null
+              "
+              [attr.data-testid]="'inflation-row-' + (baseYear + row.year)"
+            >
+              <td class="py-1.5 px-2 app-num">{{ baseYear + row.year }}</td>
+              <td class="py-1.5 px-2 text-right app-num">
+                {{ row.year === 0 ? 'now' : row.year + ' yr' }}
+              </td>
+              <td class="py-1.5 px-2 text-right app-num">{{ row.futureCost | inr }}</td>
+              <td class="py-1.5 px-2 text-right app-num">{{ row.presentValue | inr }}</td>
+              <td class="py-1.5 px-2 text-right app-num">
+                {{ row.erosionPct | number: '1.0-1' }}%
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-section-card>
+</div>

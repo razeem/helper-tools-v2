@@ -22,33 +22,9 @@ const TENURE = { min: 1, max: 30, step: 1 };
   selector: 'app-emi-calculator',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [InrPipe, FormsModule, MatSliderModule, MatExpansionModule, MatTableModule, SectionCard],
+  // Slider + donut styling is shared with the other calculators — see the
+  // `.app-slider` / `.app-donut-seg` utilities in styles.scss.
   templateUrl: './emi-calculator.html',
-  styles: `
-    /* Smooth the donut arcs as amounts change on the fly. */
-    .donut-seg {
-      transition:
-        stroke-dasharray 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-        stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Slider: full-width span + higher-contrast track/handle (light & dark).
-       The class selector out-specifies Material's global .mat-mdc-slider rule,
-       and the --mat-slider-* tokens cascade into the internals. */
-    .emi-slider {
-      width: 100%;
-      margin: 0;
-      --mat-slider-active-track-height: 6px;
-      --mat-slider-inactive-track-height: 6px;
-      --mat-slider-handle-width: 22px;
-      --mat-slider-handle-height: 22px;
-      --mat-slider-inactive-track-color: var(--mat-sys-outline);
-    }
-    /* The inactive track's 0.24 opacity is hardcoded in Material — lift it so
-       the unfilled remainder is clearly visible against the card. */
-    ::ng-deep .emi-slider .mdc-slider__track--inactive {
-      opacity: 0.55;
-    }
-  `,
 })
 export class EmiCalculator {
   protected readonly PRINCIPAL = PRINCIPAL;

@@ -129,7 +129,9 @@ export const routes: Routes = [
   {
     path: 'investing',
     title: 'Investing · Personal Finance',
-    data: noindex('Track EPF, NPS and other contributions as you build long-term wealth.'),
+    data: noindex(
+      'Track EPF, NPS and other contributions, adjust any amount for inflation, and project your NPS corpus, lumpsum and pension in today’s money.',
+    ),
     loadComponent: () => import('./features/investing/investing').then((m) => m.Investing),
   },
   {
